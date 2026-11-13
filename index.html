@@ -6,11 +6,16 @@
 <meta name="theme-color" content="#0b6b4f">
 <title>মাদ্রাসা ম্যানেজমেন্ট সিস্টেম</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{--pri:#0b6b4f;--pri2:#0e8560;--dark:#0b3d2e;--gold:#b8912f;--bg:#f3f6f4;--card:#fff;--text:#1f2933;--mut:#4a555c;--line:#e1e8e4;--red:#c0392b;--amber:#d98e04;--blue:#1f4a73;--sh:0 2px 10px rgba(16,40,32,.07)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Hind Siliguri','Noto Sans Bengali',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.55}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans Bengali',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.55}
 .hidden{display:none!important}
 button,input,select,textarea{font:inherit;color:inherit}
 h2,h3{margin:0}
@@ -72,7 +77,7 @@ input[type=checkbox],input[type=radio]{width:auto}
 .err{color:var(--red);font-size:13.5px;min-height:18px;margin-top:6px;text-align:center}
 /* print */
 #printArea{display:none}
-.pr{font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif;color:#111}
+.pr{font-family:'Noto Sans Bengali',sans-serif;color:#111;word-spacing:normal;letter-spacing:normal}
 .pr .hd{text-align:center;border-bottom:3px double #0b6b4f;padding-bottom:6px;margin-bottom:10px}.pr .hd h1{margin:0;font-size:24px;color:#0b3d2e}.pr .hd div{font-size:13px}
 .pr h2{text-align:center;font-size:18px;margin:6px 0 10px;text-decoration:underline}
 .pr table{width:100%;border-collapse:collapse;font-size:14px}.pr th,.pr td{border:1px solid #333;padding:5px 7px}.pr th{background:#eef5f0}.pr td.n,.pr th.n{text-align:right}
@@ -183,6 +188,27 @@ var clean=function(o){return JSON.parse(JSON.stringify(o))};
 var monthsBetween=function(a,b){var r=[],x=a.split('-').map(Number),y=b.split('-').map(Number),Y=x[0],M=x[1];while(Y<y[0]||(Y===y[0]&&M<=y[1])){r.push(Y+'-'+p2(M));M++;if(M>12){M=1;Y++}}return r};
 var addMonths=function(m,k){var a=m.split('-').map(Number),t=a[0]*12+a[1]-1+k;return Math.floor(t/12)+'-'+p2(t%12+1)};
 var phoneWA=function(p){var d=String(p||'').replace(/\D/g,'');if(d.indexOf('01')===0)d='88'+d;return d};
+var dip=null;
+function instCard(){
+  var inst=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;
+  return'<div class="card"><h3>📲 অ্যাপ ইনস্টল</h3>'+(inst?'<div style="font-size:13.5px">✅ অ্যাপটি এই ফোনে ইনস্টল করা আছে।</div>':'<div style="font-size:13.5px;margin-bottom:8px">অ্যাপটি ফোনের হোম স্ক্রিনে রাখলে সরাসরি আইকন থেকে খোলা যাবে।</div><button class="btn" data-a="pwaInstall">📲 অ্যাপ ইনস্টল করুন</button><div class="note" style="margin-top:8px">বাটনে কাজ না হলে Chrome-এর মেনু (⋮) → “হোম স্ক্রিনে যোগ করুন” / “অ্যাপ ইনস্টল করুন” চাপুন।</div>')+'</div>'}
+function pwaInstall(){
+  if(dip){dip.prompt();dip.userChoice.then(function(){dip=null;pwaBar()}).catch(function(){})}
+  else toast('Chrome-এর মেনু (⋮) → “হোম স্ক্রিনে যোগ করুন” চাপুন');
+}
+function pwaBar(){
+  var b=document.getElementById('pwaBar');
+  var inst=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches,off=false;try{off=localStorage.getItem('mad_pwa_x')==='1'}catch(e){}
+  if(!dip||inst||off){if(b)b.remove();return}
+  if(b)return;
+  b=document.createElement('div');b.id='pwaBar';
+  b.style.cssText='position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:60;background:#0b6b4f;color:#fff;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(0,0,0,.3)';
+  b.innerHTML='<div style="flex:1;font-size:14px;font-weight:600">📲 হোম স্ক্রিনে অ্যাপ হিসেবে রাখুন</div><button data-a="pwaInstall" style="background:#fff;color:#0b6b4f;border:0;border-radius:10px;padding:8px 12px;font-weight:700">অ্যাপ ইনস্টল করুন</button><button data-a="pwaClose" style="background:transparent;border:0;color:#fff;font-size:20px;padding:0 4px">✕</button>';
+  document.body.appendChild(b);
+}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dip=e;pwaBar()});
+window.addEventListener('appinstalled',function(){dip=null;pwaBar();toast('অ্যাপ ইনস্টল হয়েছে ✅')});
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
 function toast(msg,isErr){var t=$('#toast');t.textContent=msg;t.className=isErr?'err':'';t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(function(){t.style.display='none'},isErr?4500:2200)}
 function err(e){var m=String((e&&e.code)||(e&&e.message)||e);if(/permission/i.test(m))m='অনুমতি নেই — Firebase Rules সংশোধন করুন (সেটিংস পাতায় নিয়ম দেওয়া আছে)';toast('ত্রুটি: '+m,true);console.warn(e)}
 
@@ -228,17 +254,24 @@ function ask(msg,yes,cb){window.__ask=cb;modal('<h3 style="font-size:19px;line-h
 var H2C='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',JSP='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 function loadJs(u){return new Promise(function(res,rej){var e=document.createElement('script');e.src=u;e.onload=res;e.onerror=function(){rej(new Error('net'))};document.head.appendChild(e)})}
 function pdfLibs(){return(window.html2canvas&&window.jspdf)?Promise.resolve():loadJs(H2C).then(function(){return loadJs(JSP)})}
+function spaceFix(root){
+  var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),L=[],n;
+  while((n=w.nextNode())){var v=n.nodeValue;if(!v||!/\S/.test(v)||!/\s/.test(v))continue;var pe=n.parentNode;if(pe&&/^(SCRIPT|STYLE|TEXTAREA)$/.test(pe.tagName))continue;L.push(n)}
+  L.forEach(function(n){var parts=n.nodeValue.split(/\s+/),fr=document.createDocumentFragment();
+    parts.forEach(function(t,i){if(i>0){var sp=document.createElement('span');sp.style.cssText='display:inline-block;width:.3em;height:1px';fr.appendChild(sp)}if(t)fr.appendChild(document.createTextNode(t))});
+    n.parentNode.replaceChild(fr,n)});
+}
 function makePDF(html,name){
   toast('PDF তৈরি হচ্ছে… অনুগ্রহ করে অপেক্ষা করুন');
-  return pdfLibs().then(function(){return document.fonts&&document.fonts.ready}).then(function(){
-    var box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:transparent';box.innerHTML='<div class="pr pdfx" style="width:794px;padding:22px 26px;box-sizing:border-box">'+html+'</div>';document.body.appendChild(box);
+  return pdfLibs().then(function(){return document.fonts&&document.fonts.load?Promise.all([document.fonts.load('400 16px "Noto Sans Bengali"','অআক ১২৩'),document.fonts.load('700 16px "Noto Sans Bengali"','অআক ১২৩')]).catch(function(){}):0}).then(function(){return document.fonts&&document.fonts.ready}).then(function(){
+    var box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:transparent';box.innerHTML='<div class="pr pdfx" style="width:794px;padding:22px 26px;box-sizing:border-box">'+html+'</div>';document.body.appendChild(box);spaceFix(box);
     var wait=$$('img',box).map(function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})});
     return Promise.all(wait).then(function(){
-      var tot=box.firstChild.offsetHeight,t0=box.getBoundingClientRect().top,bps=$$('tr,.pbk',box).map(function(e){return e.getBoundingClientRect().bottom-t0}).sort(function(a,b){return a-b}),fbs=$$('.pb',box).map(function(e){return e.getBoundingClientRect().top-t0}).filter(function(x){return x>4}).sort(function(a,b){return a-b});
+      var tot=box.firstChild.offsetHeight,t0=box.getBoundingClientRect().top,bps=$$('tr,.pbk',box).map(function(e){return e.getBoundingClientRect().bottom-t0}).sort(function(a,b){return a-b}),fbs=$$('.pb',box).map(function(e){return e.getBoundingClientRect().top-t0}).filter(function(x){return x>60}).sort(function(a,b){return a-b});
       return window.html2canvas(box,{scale:2,backgroundColor:null,useCORS:true,logging:false}).then(function(cv){
         document.body.removeChild(box);
         var J=window.jspdf.jsPDF,pdf=new J({unit:'mm',format:'a4',compress:true}),Hs=1000,pages=[],st=0,thumbs=[];
-        while(st<tot-2){var lim=st+Hs,br,nf=fbs.filter(function(x){return x>st+4})[0];if(nf!==undefined&&nf<=lim)br=nf;else if(lim>=tot)br=tot;else{var c=bps.filter(function(b){return b<=lim&&b>st+Hs*.45});br=c.length?c[c.length-1]:lim}pages.push([st,br]);st=br}
+        while(st<tot-2){var lim=st+Hs,br,nf=fbs.filter(function(x){return x>st+60})[0];if(nf!==undefined&&nf<=lim)br=nf;else if(lim>=tot)br=tot;else{var c=bps.filter(function(b){return b<=lim&&b>st+Hs*.45});br=c.length?c[c.length-1]:lim}pages.push([st,br]);st=br}
         pages.forEach(function(p,i){
           if(i)pdf.addPage();
           try{pdf.setGState(new pdf.GState({opacity:0.09}));pdf.addImage(LOGO,'JPEG',45,90,120,120);pdf.setGState(new pdf.GState({opacity:1}))}catch(e){}
@@ -1042,8 +1075,9 @@ function vSettings(){
   h+='<div class="card"><h3>গ্রেডিং ও পাস নম্বর</h3><label>পাস নম্বর (প্রতিটি বিষয়ে শতকরা)</label><input id="stPass" inputmode="decimal" value="'+esc(c.pass)+'"><div style="font-size:13px;color:#4a555c;margin:8px 0 4px">গ্রেড তালিকা (প্রতি লাইনে: ন্যূনতম শতকরা,গ্রেড,পয়েন্ট)</div><textarea id="stGr" rows="7">'+esc(c.grades.map(function(g){return g.min+','+g.g+','+g.p}).join('\n'))+'</textarea></div>';
   h+='<button class="btn full" data-a="setSave">💾 সেটিংস সংরক্ষণ</button>';
   h+='<div class="card" style="margin-top:14px"><h3>📦 তথ্যের ব্যাকআপ</h3><div style="font-size:13.5px;color:#3d4a52;margin-bottom:8px">নিয়মিত ব্যাকআপ ফাইল ডাউনলোড করে রাখুন (মাসে অন্তত একবার)।</div><div class="bar"><button class="btn sec" data-a="backup">⬇️ ব্যাকআপ ডাউনলোড</button><label class="btn sec" style="margin:0;cursor:pointer">⬆️ ব্যাকআপ ফেরত আনুন<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div></div>';
-  if(FB){h+='<div class="card"><h3>🔐 অ্যাকাউন্ট ও নিরাপত্তা</h3><div style="font-size:13.5px">লগইন: <b>'+esc(curUser?curUser.email:'')+'</b></div><div style="font-size:13px;margin:6px 0">আপনার UID: <b style="word-break:break-all">'+esc(curUser?curUser.uid:'')+'</b></div><div style="font-size:13px;color:#4a555c;margin-bottom:4px">Firebase → Firestore → Rules-এ নিম্নেরটি স্থাপন করে Publish করুন (আপনি সব দেখবেন; পাবলিক শুধু নোটিশ, কমিটি, অভিভাবক-কোডের পাতা দেখবে ও অর্থ প্রদান অনুরোধ পাঠাতে পারবে):</div><textarea rows="14" readonly style="font-family:monospace;font-size:12.5px" onclick="this.select()">'+esc(RULES(curUser&&curUser.uid))+'</textarea><div class="bar" style="margin-top:10px"><button class="btn red" data-a="logout">লগআউট</button></div></div>'}
+  if(FB){h+='<div class="card"><h3>🔐 অ্যাকাউন্ট</h3><div style="font-size:13.5px">লগইন: <b>'+esc(curUser?curUser.email:'')+'</b></div><div class="bar" style="margin-top:10px"><button class="btn red" data-a="logout">লগআউট</button></div></div>'}
   else h+='<div class="card"><h3>☁️ Firebase সংযুক্তি</h3><div style="font-size:13.5px;margin-bottom:8px">এখন ডেমো মোডে আছেন — তথ্য শুধু এই ব্রাউজারে। সব ডিভাইসে একই তথ্য ও নিরাপত্তার জন্য Firebase সংযুক্ত করুন।</div><button class="btn" data-a="fbSetup">Firebase সংযুক্ত করুন</button></div>';
+  h+=instCard();
   return h;
 }
 function setSave(){
@@ -1121,6 +1155,8 @@ document.addEventListener('click',function(e){
     case'cashPrint':cashPrint();break;
     case'setSave':setSave();break;case'backup':backup();break;case'dk':PREF.dark=PREF.dark?0:1;applyPref();render();break;case'fz':PREF.zoom=Math.max(.85,Math.min(1.4,Math.round((PREF.zoom+(+t.dataset.v)*.1)*100)/100));applyPref();break;
     case'fbSetup':closeModal();fbSetup();break;case'fbSave':fbSave();break;
+    case'pwaInstall':pwaInstall();break;
+    case'pwaClose':try{localStorage.setItem('mad_pwa_x','1')}catch(e){}var pb=document.getElementById('pwaBar');if(pb)pb.remove();break;
     case'logout':ask('লগআউট করবেন?','লগআউট',function(){auth.signOut()});break;
     case'dForm':closeModal();dForm(id);break;case'dSave':dSave();break;case'dDel':dDel(id);break;case'dView':dView(id);break;
     case'donForm':closeModal();donForm(id);break;case'donSave':donSave();break;
