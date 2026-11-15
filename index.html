@@ -650,8 +650,8 @@ function geoBlock(P,title){P=P||'G';var q='s'+P;
   '<input id="'+q+'UpaX" placeholder="উপজেলা/থানার নাম লিখুন" style="display:none;margin-top:6px">'+
   '<div id="'+q+'UniBox"><label>ইউনিয়ন</label><select id="'+q+'Uni" disabled><option value="">আগে উপজেলা বাছুন</option></select><input id="'+q+'UniX" placeholder="ইউনিয়নের নাম লিখুন" style="display:none;margin-top:6px"></div>'+
   '<div id="'+q+'MunBox" style="display:none"><label>পৌরসভা / সিটি কর্পোরেশনের নাম</label><input id="'+q+'Mun" placeholder="যেমন: চট্টগ্রাম সিটি কর্পোরেশন"></div>'+
-  '<div class="grid g2"><div><label>ওয়ার্ড নং</label><input id="'+q+'Ward" inputmode="numeric" placeholder="যেমন: ৫"></div><div><label>ডাকঘর</label><input id="'+q+'PO" placeholder="ডাকঘরের নাম"></div></div>'+
-  '<label>গ্রাম/পাড়া/এলাকা/রাস্তা</label><input id="'+q+'Vil" placeholder="গ্রাম/পাড়া/রাস্তা">';
+  '<div class="grid g2"><div><label>ওয়ার্ড নং</label><input id="'+q+'Ward" list="'+q+'WardL" inputmode="numeric" placeholder="যেমন: ৫"><datalist id="'+q+'WardL">'+[1,2,3,4,5,6,7,8,9].map(function(n){return'<option value="'+n+'">'}).join('')+'</datalist></div><div><label>ডাকঘর</label><input id="'+q+'PO" placeholder="ডাকঘরের নাম"></div></div>'+
+  '<label>গ্রাম/পাড়া/মহল্লা/রাস্তা</label><input id="'+q+'Vil" list="'+q+'VilL" placeholder="তালিকা থেকে বাছুন বা নিজে লিখুন"><datalist id="'+q+'VilL"></datalist>';
 }
 function geoCh(id){
   var q=id.slice(0,2),g=function(k){return $('#'+q+k)},v=function(k){return g(k).value};
@@ -677,6 +677,23 @@ function geoRead(P){
   return o;
 }
 function set0(st,q,pre){var s=function(k,v){var e=$(q+k);if(e&&v)e.value=v};s('Mun',st[pre+'Mun']);s('Ward',st[pre+'Ward']);if(st[pre+'Type']){s('Type',st[pre+'Type']);geoCh(q.slice(1)+'Type')}}
+var RGV={mun:{1:['উত্তর নোয়াগাঁও'],2:['দক্ষিণ নোয়াগাঁও'],3:['ইছাখালী'],4:['দক্ষিণ ঘাটচেক'],5:['উত্তর ঘাটচেক'],6:['রাঙ্গুনিয়া'],7:['মুরাদনগর'],8:['সৈয়দবাড়ী'],9:['ইছামতি']},
+ u:{'পদুয়া':{1:['নারিশ্চা'],2:['পদুয়া'],3:['সারাশিয়া','হরিহর'],4:['মৌলভীখীল','দ্বারিকোপ'],5:['জয়নগর','হারুয়ালছড়ি'],6:['পশ্চিম খুরুশিয়া'],7:['পূর্ব খুরুশিয়া'],8:['সুখবিলাস'],9:['নাপিত পুকুরিয়া','দুধ পুকুরিয়া']},
+ 'ইসলামপুর':{1:['বেতছড়ি','ত্রিপুরারদিঘী','সেগুন বাগিচা','বহড়াতল','চারাবটতল'],2:['রৈস্যাবিলি','খতিব নগর','ছাদিক্যাবিলি','চৌচালাবিলি'],3:['মগাছড়ি']},
+ 'সরফভাটা':['মিরেরখীল','হাজারীখীল','মৌলানাগ্রাম','পশ্চিম সরফভাটা','উত্তর পাড়া','মধ্যম সরফভাটা','হাসপাতাল পাড়া','মজুরী পাড়া','সিপাহী পাড়া','ভূমিরখীল','পূর্ব সরফভাটা','দক্ষিণ পাড়া','গুচ্ছ গ্রাম','দক্ষিণ সরফভাটা','ছৈয়দুরখীল','ক্যইদেরখুল'],
+ 'স্বনির্ভর রাঙ্গুনিয়া':['পশ্চিম সাবেক রাঙ্গুনিয়া','সাবেক রাঙ্গুনিয়া','শান্তিনিকেতন','ব্রহ্মোত্তর','মজুমদারখিল']}};
+if(!MG.n.some(function(x){return x[1]===65&&x[2]==='পদুয়া'}))MG.n.push([99001,65,'পদুয়া']);
+function vilSug(P){
+  var q='#s'+P,dl=$(q+'VilL');if(!dl)return;var g=function(k){var e=$(q+k);return e?e.value:''};
+  var list=[];
+  if(g('Upa')==='65'){
+    var w=String(g('Ward')).replace(/[০-৯]/g,function(d){return'০১২৩৪৫৬৭৮৯'.indexOf(d)}).trim(),ty=g('Type')||'ইউনিয়ন';
+    if(ty==='পৌরসভা'){var mn=$(q+'Mun');if(mn&&!mn.value)mn.value='রাঙ্গুনিয়া পৌরসভা';list=w&&RGV.mun[w]?RGV.mun[w]:[].concat.apply([],Object.keys(RGV.mun).map(function(k){return RGV.mun[k]}))}
+    else{var nm=geoSel('Uni',P),d=RGV.u[nm];if(Array.isArray(d))list=d;else if(d)list=w&&d[w]?d[w]:[].concat.apply([],Object.keys(d).map(function(k){return d[k]}))}
+  }
+  dl.innerHTML=list.map(function(x){return'<option value="'+esc(x)+'">'}).join('');
+}
+var _geoCh0=geoCh;geoCh=function(id){_geoCh0(id);try{vilSug(id.slice(1,2))}catch(e){}};
 function geoInit(st,P){
   P=P||'G';if(!st)return;var pre=P==='G'?'g':'p',q='#s'+P,ak=P==='G'?'addr':'paddr';
   if(!st[pre+'Div']){if(st[ak]&&$(q+'Vil'))$(q+'Vil').value=st[ak];set0(st,q,pre);return}
@@ -1440,7 +1457,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('input',function(e){
   var t=e.target;
-  if(t.id==='sq'){UI.sq=t.value;$('#sList').innerHTML=stList()}else if(t.id==='pq'){UI.pq=t.value;$('#pList').innerHTML=pListHTML()}
+  if(t.id==='sq'){UI.sq=t.value;$('#sList').innerHTML=stList()}else if(/^s[GP]Ward$/.test(t.id)){vilSug(t.id.slice(1,2))}else if(t.id==='pq'){UI.pq=t.value;$('#pList').innerHTML=pListHTML()}
   else if(t.id==='dq'){UI.dq=t.value;$('#mList').innerHTML=dList()}
   else if(t.id==='tq'){UI.tq=t.value;$('#tList').innerHTML=stfList()}
   else if(t.id==='dnFind'){var q3=t.value.trim().toLowerCase(),cur3=$('#dnSid').value,l3=S.donors.filter(function(d){return!q3||(d.name+' '+(d.phone||'')+' '+midOf(d)+' '+(d.mno||'')).toLowerCase().indexOf(q3)>=0}).sort(function(a,b){return(a.mno||0)-(b.mno||0)});$('#dnSid').innerHTML='<option value="">— সদস্য বাছাই করুন —</option>'+dOpts(l3,cur3)}
