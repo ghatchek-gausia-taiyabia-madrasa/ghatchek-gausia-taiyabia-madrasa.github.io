@@ -332,7 +332,7 @@ function printHTML(html){
 /* ============ রেজিস্টার, হাজিরা, ছুটি, রুটিন, নথিপত্র ============ */
 var LKINDS=['ঝরে পড়া','স্থানান্তর','প্রাক্তন (সমাপ্ত)','ভর্তি বাতিল'];
 var DAYS=['শনিবার','রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার'];
-var DOCCATS=['নিয়োগপত্র','সনদ/ছাড়পত্র','সভার কার্যবিবরণী','সরকারি/বোর্ডের চিঠি','অনুমোদন/রেজিস্ট্রেশন','হিসাব সংক্রান্ত','অন্যান্য'];
+var DOCCATS=['নিয়োগপত্র','সনদ/ছাড়পত্র','সভার কার্যবিবরণী','সরকারি/বোর্ডের চিঠি','চিঠিপত্র (আগত)','চিঠিপত্র (প্রেরিত)','সম্পদ ও মালামাল','পরিদর্শন','প্রশ্নপত্র','শিক্ষকের জমা প্রশ্ন','অনুমোদন/রেজিস্ট্রেশন','হিসাব সংক্রান্ত','অন্যান্য'];
 function actStf(){return S.staff.filter(function(x){return x.status!=='left'})}
 function daysBtw(a,b){if(!a)return 0;return Math.max(1,Math.round((new Date(b||a)-new Date(a))/864e5)+1)}
 function extraInfo(s){var l=[];exL(s,l);if(s.dob)l.push('জন্ম তারিখ: '+fdate(s.dob));if(s.sec)l.push('শাখা: '+esc(s.sec));if(s.ses)l.push('শিক্ষাবর্ষ: '+bn(esc(s.ses)));if(s.adm)l.push('ভর্তি: '+fdate(s.adm));if(s.status==='left')l.push('<b style="color:#c0392b">অবস্থা: '+esc(s.kind||'ঝরে পড়া')+(s.leftDate?' ('+fdate(s.leftDate)+')':'')+(s.leftNote?' — '+esc(s.leftNote):'')+'</b>');return l.length?'<div class="card" style="margin-top:8px;font-size:14px;line-height:1.8">'+l.join('<br>')+'</div>':''}
@@ -459,7 +459,32 @@ function appLetter(id){
 /* ---- reports hub ---- */
 function vReports(){
   var B=function(k,ic,t,d){return'<button class="tile" data-a="rp" data-v="'+k+'"><i>'+ic+'</i><b>'+t+'</b><small>'+d+'</small></button>'};
-  return'<div class="pg">📘 রেজিস্টার ও প্রতিবেদন</div><div class="bar"><select id="rcl" style="width:auto">'+clsOpts(UI.rcl,1)+'</select><input type="month" id="rm" value="'+UI.rm+'" style="width:auto"></div><div class="note">শ্রেণি ও মাস বাছাই করে নিচের প্রতিবেদনে চাপ দিন — PDF তৈরি হবে।</div><div class="ttl">ছাত্র</div><div class="tiles">'+B('reg','📘','ভর্তি রেজিস্টার','ভর্তি নং, তারিখ, অভিভাবক')+B('act','✅','অধ্যয়নরত ছাত্র','শ্রেণি ও রোল অনুযায়ী')+B('boys','👦','ছাত্রদের তালিকা','অধ্যয়নরত ছাত্র')+B('girls','👧','ছাত্রীদের তালিকা','অধ্যয়নরত ছাত্রী')+B('drop','⚠️','ঝরে পড়া ছাত্র','তারিখ ও কারণসহ')+B('transfer','🔁','স্থানান্তরিত ছাত্র','ছাড়পত্র প্রদত্ত')+B('alumni','🎓','প্রাক্তন ছাত্র','সমাপ্ত ও উত্তীর্ণ')+B('ids','🪪','আইডি কার্ড (সব)','নির্বাচিত শ্রেণির')+B('certs','📜','সনদ/ছাড়পত্র রেজিস্টার','প্রদত্ত সনদের তালিকা')+'</div><div class="ttl" style="margin-top:10px">শিক্ষক-কর্মচারী</div><div class="tiles">'+B('staff','👨‍🏫','শিক্ষক-কর্মচারী তালিকা','পদ, যোগ্যতা, দায়িত্ব')+B('salary','💵','বেতন রেজিস্টার','নির্বাচিত মাসের')+B('satt','🗓️','হাজিরা প্রতিবেদন','নির্বাচিত মাসের')+B('leaves','🏖️','ছুটির রেজিস্টার','সব আবেদন')+'</div>';
+  return'<div class="pg">📘 রেজিস্টার ও প্রতিবেদন</div><div class="bar"><select id="rcl" style="width:auto">'+clsOpts(UI.rcl,1)+'</select><input type="month" id="rm" value="'+UI.rm+'" style="width:auto"></div><div class="note">শ্রেণি ও মাস বাছাই করে নিচের প্রতিবেদনে চাপ দিন — PDF তৈরি হবে।</div><div class="ttl">ছাত্র</div><div class="tiles">'+B('reg','📘','ভর্তি রেজিস্টার','ভর্তি নং, তারিখ, অভিভাবক')+B('act','✅','অধ্যয়নরত ছাত্র','শ্রেণি ও রোল অনুযায়ী')+B('boys','👦','ছাত্রদের তালিকা','অধ্যয়নরত ছাত্র')+B('girls','👧','ছাত্রীদের তালিকা','অধ্যয়নরত ছাত্রী')+B('drop','⚠️','ঝরে পড়া ছাত্র','তারিখ ও কারণসহ')+B('transfer','🔁','স্থানান্তরিত ছাত্র','ছাড়পত্র প্রদত্ত')+B('alumni','🎓','প্রাক্তন ছাত্র','সমাপ্ত ও উত্তীর্ণ')+B('ids','🪪','আইডি কার্ড (সব)','নির্বাচিত শ্রেণির')+B('certs','📜','সনদ/ছাড়পত্র রেজিস্টার','প্রদত্ত সনদের তালিকা')+'</div><div class="ttl" style="margin-top:10px">রেজিস্টার ও দাপ্তরিক নথি</div><div class="tiles">'+B('r_att','🗓️','শিক্ষার্থী হাজিরা রেজিস্টার','নির্বাচিত মাস ও শ্রেণির')+B('r_fee','💰','শিক্ষার্থী বেতন রেজিস্টার','নির্বাচিত মাসের আদায়')+B('r_res','📝','ফলাফল রেজিস্টার','সব পরীক্ষার সারসংক্ষেপ')+B('r_cres','🏅','শ্রেণিভিত্তিক বার্ষিক ফলাফল','সব পরীক্ষা একসাথে')+B('r_inc','⬇️','আয় রেজিস্টার','নির্বাচিত মাসের')+B('r_exp','⬆️','ব্যয় রেজিস্টার','নির্বাচিত মাসের')+B('r_don','🤝','দান ও অনুদান রেজিস্টার','নির্বাচিত মাসের')+B('d_asset','🪑','সম্পদ ও মালামাল রেজিস্টার','বেঞ্চ, চেয়ার, আসবাব')+B('d_meet','📋','সভার কার্যবিবরণী রেজিস্টার','সব সভা')+B('d_in','📥','চিঠিপত্র (আগত) ও ডাক','প্রাপ্ত চিঠি')+B('d_out','📤','চিঠিপত্র (প্রেরিত)','পাঠানো চিঠি')+B('d_visit','👁️','পরিদর্শন রেজিস্টার','পরিদর্শকের মন্তব্য')+B('d_qp','📄','প্রশ্নপত্র রেজিস্টার','প্রস্তুত ও জমা প্রশ্ন')+'</div><div class="ttl" style="margin-top:10px">শিক্ষক-কর্মচারী</div><div class="tiles">'+B('staff','👨‍🏫','শিক্ষক-কর্মচারী তালিকা','পদ, যোগ্যতা, দায়িত্ব')+B('salary','💵','বেতন রেজিস্টার','নির্বাচিত মাসের')+B('satt','🗓️','হাজিরা প্রতিবেদন','নির্বাচিত মাসের')+B('leaves','🏖️','ছুটির রেজিস্টার','সব আবেদন')+'</div>';
+}
+var DREG={d_asset:['সম্পদ ও মালামাল রেজিস্টার',['সম্পদ ও মালামাল']],d_meet:['সভার কার্যবিবরণী রেজিস্টার',['সভার কার্যবিবরণী']],d_in:['চিঠিপত্র (আগত) ও ডাক রেজিস্টার',['চিঠিপত্র (আগত)','সরকারি/বোর্ডের চিঠি']],d_out:['চিঠিপত্র (প্রেরিত) রেজিস্টার',['চিঠিপত্র (প্রেরিত)']],d_visit:['পরিদর্শন রেজিস্টার',['পরিদর্শন']],d_qp:['প্রশ্নপত্র রেজিস্টার',['প্রশ্নপত্র','শিক্ষকের জমা প্রশ্ন']]};
+function regRun(k,cl,m){
+  var sfx=cl?' — '+esc(cl):'',mt=' — '+monthLabel(m),t0=function(a){return a.reduce(function(s,x){return s+x},0)};
+  if(DREG[k]){var d=DREG[k],l=S.docs.filter(function(x){return d[1].indexOf(x.cat)>=0}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))});
+    if(!l.length){toast('এই রেজিস্টারে এখনও কিছু লেখা হয়নি। আরও → প্রশাসনিক নথিপত্রে "নতুন নথি" দিয়ে যোগ করুন',true);return}
+    rptTable(d[0],['ক্রম','তারিখ','শিরোনাম','ধরন','বিবরণ'],l.map(function(x,i){return[bn(i+1),fdate(x.date),esc(x.title),esc(x.cat||''),esc(x.note||'')]}));return}
+  if(k==='r_att'){var sts=activeSts(cl).slice().sort(function(a,b){return String(a.cls).localeCompare(String(b.cls))||byRoll(a,b)}),c={};
+    S.attendance.forEach(function(r){if((r.date||'').slice(0,7)!==m||!r.rec)return;Object.keys(r.rec).forEach(function(sid){var v=r.rec[sid],o=c[sid]||(c[sid]={p:0,a:0,l:0});if(v==='p')o.p++;else if(v==='a')o.a++;else o.l++})});
+    rptTable('শিক্ষার্থী হাজিরা রেজিস্টার'+mt+sfx,['ক্রম','শ্রেণি','রোল','নাম','উপস্থিত','অনুপস্থিত','ছুটি','হার %'],sts.map(function(s,i){var o=c[s.id]||{p:0,a:0,l:0},tt=o.p+o.a+o.l;return[bn(i+1),esc(s.cls),bn(s.roll||'-'),esc(s.name),bn(o.p),bn(o.a),bn(o.l),tt?bn(Math.round(o.p/tt*100)):'—']}));return}
+  if(k==='r_fee'){var l=S.payments.filter(function(p){var s=stById(p.sid);return(p.date||'').slice(0,7)===m&&(!cl||(s&&s.cls===cl))}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))}),tot=t0(l.map(function(p){return num(p.amount)}));
+    rptTable('শিক্ষার্থী বেতন/ফি রেজিস্টার'+mt+sfx,['ক্রম','তারিখ','রসিদ নং','নাম','শ্রেণি','ধরন','টাকা (৳)'],l.map(function(p,i){var s=stById(p.sid);return[bn(i+1),fdate(p.date),bn(p.no||'-'),esc(s?s.name:'(মুছে ফেলা)'),esc(s?s.cls:''),esc(p.type||''),fm(p.amount)]}),'<tr><th colspan="6">মোট</th><th>'+fm(tot)+'</th></tr>');return}
+  if(k==='r_res'){var l=S.exams.filter(function(e){return!cl||e.cls===cl}).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))});
+    rptTable('ফলাফল রেজিস্টার'+sfx,['ক্রম','পরীক্ষা','শ্রেণি','তারিখ','পরীক্ষার্থী','পাস','ফেল','পাসের হার','প্রথম স্থান'],l.map(function(e,i){var rs=calcResult(e),en=rs.filter(function(r){return r.entered}),ps=en.filter(function(r){return!r.fail}).length,f=rs.filter(function(r){return r.pos===1})[0];return[bn(i+1),esc(e.name),esc(e.cls),e.date?fdate(e.date):'',bn(en.length),bn(ps),bn(en.length-ps),en.length?bn(Math.round(ps/en.length*100))+'%':'—',f?esc(f.st.name):'—']}));return}
+  if(k==='r_cres'){if(!cl){toast('উপরে শ্রেণি বাছাই করুন',true);return}
+    var exs=S.exams.filter(function(e){return e.cls===cl}).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))});if(!exs.length){toast('এই শ্রেণিতে কোনো পরীক্ষা নেই',true);return}
+    var rr=exs.map(function(e){return calcResult(e)}),sts=activeSts(cl).slice().sort(byRoll);
+    rptTable('শ্রেণিভিত্তিক বার্ষিক ফলাফল — '+esc(cl),['ক্রম','রোল','নাম'].concat(exs.map(function(e){return esc(e.name)+' (জিপিএ/গ্রেড)'})).concat(['গড় %']),sts.map(function(s,i){var sp=0,sn=0,cells=rr.map(function(rs){var r=rs.filter(function(x){return x.st.id===s.id})[0];if(!r||!r.entered)return'—';sp+=r.pct;sn++;return bn(r.gpa.toFixed(2))+' / '+esc(r.grade)});return[bn(i+1),bn(s.roll||'-'),esc(s.name)].concat(cells).concat([sn?bn(Math.round(sp/sn*10)/10):'—'])}));return}
+  if(k==='r_inc'||k==='r_exp'){var rows=[];
+    if(k==='r_inc'){S.payments.forEach(function(p){if((p.date||'').slice(0,7)===m){var s=stById(p.sid);rows.push([p.date,'বেতন/ফি আদায়',(s?s.name:'')+' — '+(p.type||''),num(p.amount)])}});S.donations.forEach(function(p){if((p.date||'').slice(0,7)===m){var d=dById(p.did);rows.push([p.date,'দান/অনুদান',(d?d.name:'')+(p.note?' — '+p.note:''),num(p.amount)])}})}
+    S.cash.forEach(function(c){if((c.date||'').slice(0,7)===m&&c.type===(k==='r_inc'?'in':'out'))rows.push([c.date,c.cat||'',c.note||'',num(c.amt)])});
+    rows.sort(function(a,b){return String(a[0]).localeCompare(String(b[0]))});
+    rptTable((k==='r_inc'?'আয় রেজিস্টার':'ব্যয় রেজিস্টার')+mt,['ক্রম','তারিখ','খাত','বিবরণ','টাকা (৳)'],rows.map(function(r,i){return[bn(i+1),fdate(r[0]),esc(r[1]),esc(r[2]),fm(r[3])]}),'<tr><th colspan="4">মোট</th><th>'+fm(t0(rows.map(function(r){return r[3]})))+'</th></tr>');return}
+  if(k==='r_don'){var l=S.donations.filter(function(p){return(p.date||'').slice(0,7)===m}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))});
+    rptTable('দান ও অনুদান রেজিস্টার'+mt,['ক্রম','তারিখ','রসিদ নং','দাতা','মাধ্যম','টাকা (৳)'],l.map(function(p,i){var d=dById(p.did);return[bn(i+1),fdate(p.date),bn(p.no||'-'),esc(d?d.name:''),esc(p.meth||''),fm(p.amount)]}),'<tr><th colspan="5">মোট</th><th>'+fm(t0(l.map(function(p){return num(p.amount)})))+'</th></tr>')}
 }
 function reportRun(k){
   var cl=UI.rcl,m=UI.rm,all=S.students.slice().sort(function(a,b){return String(a.adm||'').localeCompare(String(b.adm||''))||num(a.ts)-num(b.ts)}),ino={};all.forEach(function(x,i){ino[x.id]=i+1});
@@ -467,6 +492,7 @@ function reportRun(k){
   var kind=function(x){return x.kind||'ঝরে পড়া'};
   if(k==='reg')rptTable(ttl('ভর্তি রেজিস্টার'),['ক্রম','ভর্তি নং','ভর্তির তারিখ','ছাত্রের নাম','লিঙ্গ','পিতার নাম','মাতার নাম','জন্ম তারিখ','শ্রেণি','ঠিকানা','মোবাইল'],all.filter(inCls).map(function(x,i){return[bn(i+1),bn(x.admNo||ino[x.id]),fdate(x.adm),esc(x.name),esc(x.gender||''),esc(x.father||''),esc(x.mother||''),x.dob?fdate(x.dob):'',esc(x.cls),esc(x.addr||''),bn(esc(x.phone||''))]}));
   else if(k==='act')rptTable(ttl('অধ্যয়নরত ছাত্রের তালিকা'),['ক্রম','শ্রেণি','রোল','নাম','পিতার নাম','মোবাইল','শিক্ষাবর্ষ'],S.students.filter(function(x){return x.status!=='left'&&inCls(x)}).sort(byC).map(function(x,i){return[bn(i+1),esc(x.cls),bn(x.roll||'-'),esc(x.name),esc(x.father||''),bn(esc(x.phone||'')),bn(esc(x.ses||''))]}));
+  else if(/^(r|d)_/.test(k))regRun(k,cl,m);
   else if(k==='boys'||k==='girls'){var gv=k==='boys'?'ছাত্র':'ছাত্রী';rptTable(ttl(gv+(k==='boys'?'দের':'দের')+' তালিকা'),['ক্রম','শ্রেণি','রোল','নাম','পিতার নাম','মোবাইল','শিক্ষাবর্ষ'],S.students.filter(function(x){return x.status!=='left'&&inCls(x)&&x.gender===gv}).sort(byC).map(function(x,i){return[bn(i+1),esc(x.cls),bn(x.roll||'-'),esc(x.name),esc(x.father||''),bn(esc(x.phone||'')),bn(esc(x.ses||''))]}))}
   else if(k==='drop'||k==='transfer'||k==='alumni'){var kn={drop:'ঝরে পড়া',transfer:'স্থানান্তর',alumni:'প্রাক্তন (সমাপ্ত)'}[k],tt={drop:'ঝরে পড়া ছাত্রের তালিকা',transfer:'স্থানান্তরিত ছাত্রের তালিকা',alumni:'প্রাক্তন ছাত্রের তালিকা'}[k];
     rptTable(ttl(tt),['ক্রম','নাম','পিতার নাম','শ্রেণি','ভর্তি','চলে যাওয়ার তারিখ','কারণ/মন্তব্য'],S.students.filter(function(x){return x.status==='left'&&inCls(x)&&(kind(x)===kn||(k==='drop'&&kind(x)==='ভর্তি বাতিল'))}).sort(byC).map(function(x,i){return[bn(i+1),esc(x.name),esc(x.father||''),esc(x.cls),fdate(x.adm),x.leftDate?fdate(x.leftDate):'',esc(x.leftNote||'')]}))}
@@ -620,9 +646,12 @@ var MG={d:MGEO.d,z:MGEO.z,u:MGEO.u,n:MGEO.n};
 function gOpts(list,ph){return'<option value="">'+ph+'</option>'+list.map(function(x){return'<option value="'+x[0]+'">'+esc(x[x.length-1])+'</option>'}).join('')}
 function geoBlock(P,title){P=P||'G';var q='s'+P;
   return'<div class="note" style="margin-top:8px"><b>'+(title||'ঠিকানা')+'</b> — বিভাগ বাছুন, নিচের ঘরগুলো নিজে নিজে আসবে</div><div class="grid g2"><div><label>বিভাগ</label><select id="'+q+'Div">'+gOpts(MG.d,'বিভাগ বাছুন')+'</select></div><div><label>জেলা</label><select id="'+q+'Dist" disabled><option value="">আগে বিভাগ বাছুন</option></select></div></div>'+
-  '<div class="grid g2"><div><label>উপজেলা/থানা</label><select id="'+q+'Upa" disabled><option value="">আগে জেলা বাছুন</option></select></div><div><label>ইউনিয়ন/ওয়ার্ড</label><select id="'+q+'Uni" disabled><option value="">আগে উপজেলা বাছুন</option></select></div></div>'+
-  '<input id="'+q+'UpaX" placeholder="উপজেলা/থানার নাম লিখুন" style="display:none;margin-top:6px"><input id="'+q+'UniX" placeholder="ইউনিয়নের নাম লিখুন" style="display:none;margin-top:6px">'+
-  '<div class="grid g2"><div><label>ডাকঘর</label><input id="'+q+'PO" placeholder="ডাকঘরের নাম"></div><div><label>গ্রাম/পাড়া/এলাকা</label><input id="'+q+'Vil" placeholder="গ্রাম/পাড়া/রাস্তা"></div></div>';
+  '<div class="grid g2"><div><label>উপজেলা/থানা</label><select id="'+q+'Upa" disabled><option value="">আগে জেলা বাছুন</option></select></div><div><label>এলাকার ধরন</label><select id="'+q+'Type"><option>ইউনিয়ন</option><option>পৌরসভা</option><option>সিটি কর্পোরেশন</option></select></div></div>'+
+  '<input id="'+q+'UpaX" placeholder="উপজেলা/থানার নাম লিখুন" style="display:none;margin-top:6px">'+
+  '<div id="'+q+'UniBox"><label>ইউনিয়ন</label><select id="'+q+'Uni" disabled><option value="">আগে উপজেলা বাছুন</option></select><input id="'+q+'UniX" placeholder="ইউনিয়নের নাম লিখুন" style="display:none;margin-top:6px"></div>'+
+  '<div id="'+q+'MunBox" style="display:none"><label>পৌরসভা / সিটি কর্পোরেশনের নাম</label><input id="'+q+'Mun" placeholder="যেমন: চট্টগ্রাম সিটি কর্পোরেশন"></div>'+
+  '<div class="grid g2"><div><label>ওয়ার্ড নং</label><input id="'+q+'Ward" inputmode="numeric" placeholder="যেমন: ৫"></div><div><label>ডাকঘর</label><input id="'+q+'PO" placeholder="ডাকঘরের নাম"></div></div>'+
+  '<label>গ্রাম/পাড়া/এলাকা/রাস্তা</label><input id="'+q+'Vil" placeholder="গ্রাম/পাড়া/রাস্তা">';
 }
 function geoCh(id){
   var q=id.slice(0,2),g=function(k){return $('#'+q+k)},v=function(k){return g(k).value};
@@ -634,24 +663,26 @@ function geoCh(id){
     if(u==='x'||!u){g('Uni').innerHTML='<option value="">'+(u==='x'?'ইউনিয়ন নিজে লিখুন':'আগে উপজেলা বাছুন')+'</option>'+(u==='x'?'<option value="x" selected>নিজে লিখব</option>':'');g('Uni').disabled=u!=='x';g('UniX').style.display=u==='x'?'block':'none'}
     else{g('Uni').innerHTML=gOpts(MG.n.filter(function(y){return y[1]===Number(u)}),'ইউনিয়ন বাছুন')+'<option value="x">তালিকায় নেই (নিজে লিখব)</option>';g('Uni').disabled=false;g('UniX').style.display='none'}}
   else if(sfx==='Uni'){g('UniX').style.display=v('Uni')==='x'?'block':'none'}
+  else if(sfx==='Type'){var un=v('Type')==='ইউনিয়ন';g('UniBox').style.display=un?'block':'none';g('MunBox').style.display=un?'none':'block'}
 }
 function geoSel(k,P){var e=$('#s'+(P||'G')+k);return e&&e.value&&e.value!=='x'?e.options[e.selectedIndex].text:''}
 function geoRead(P){
   P=P||'G';var pre=P==='G'?'g':'p',q='#s'+P;
   var v=function(k){var e=$(q+k);return e?e.value:''},t=function(k){var e=$(q+k);return e?e.value.trim():''};
-  var upa=v('Upa')==='x'?t('UpaX'):geoSel('Upa',P),uni=v('Uni')==='x'?t('UniX'):geoSel('Uni',P);
-  var po=t('PO'),vil=t('Vil');
-  var addr=[vil,po?'ডাকঘর: '+po:'',uni,upa,geoSel('Dist',P),geoSel('Div',P)].filter(Boolean).join(', ');
+  var upa=v('Upa')==='x'?t('UpaX'):geoSel('Upa',P),ty=v('Type')||'ইউনিয়ন',mun=t('Mun'),uni=ty==='ইউনিয়ন'?(v('Uni')==='x'?t('UniX'):geoSel('Uni',P)):'';
+  var po=t('PO'),vil=t('Vil'),wd=t('Ward');
+  var addr=[vil,po?'ডাকঘর: '+po:'',wd?'ওয়ার্ড নং '+wd:'',ty==='ইউনিয়ন'?(uni?uni+' ইউনিয়ন':''):(mun?mun+' ('+ty+')':''),upa,geoSel('Dist',P),geoSel('Div',P)].filter(Boolean).join(', ');
   var o={};o[P==='G'?'addr':'paddr']=addr;
-  o[pre+'Div']=v('Div');o[pre+'Dist']=v('Dist');o[pre+'Upa']=v('Upa');o[pre+'Uni']=v('Uni');o[pre+'UpaX']=t('UpaX');o[pre+'UniX']=t('UniX');o[pre+'PO']=po;o[pre+'Vil']=vil;
+  o[pre+'Div']=v('Div');o[pre+'Dist']=v('Dist');o[pre+'Upa']=v('Upa');o[pre+'Uni']=v('Uni');o[pre+'UpaX']=t('UpaX');o[pre+'UniX']=t('UniX');o[pre+'PO']=po;o[pre+'Vil']=vil;o[pre+'Type']=ty;o[pre+'Mun']=mun;o[pre+'Ward']=wd;
   return o;
 }
+function set0(st,q,pre){var s=function(k,v){var e=$(q+k);if(e&&v)e.value=v};s('Mun',st[pre+'Mun']);s('Ward',st[pre+'Ward']);if(st[pre+'Type']){s('Type',st[pre+'Type']);geoCh(q.slice(1)+'Type')}}
 function geoInit(st,P){
   P=P||'G';if(!st)return;var pre=P==='G'?'g':'p',q='#s'+P,ak=P==='G'?'addr':'paddr';
-  if(!st[pre+'Div']){if(st[ak]&&$(q+'Vil'))$(q+'Vil').value=st[ak];return}
+  if(!st[pre+'Div']){if(st[ak]&&$(q+'Vil'))$(q+'Vil').value=st[ak];set0(st,q,pre);return}
   var set=function(k,val){var e=$(q+k);if(e)e.value=val};
   set('Div',st[pre+'Div']);geoCh('s'+P+'Div');set('Dist',st[pre+'Dist']||'');geoCh('s'+P+'Dist');set('Upa',st[pre+'Upa']||'');geoCh('s'+P+'Upa');set('Uni',st[pre+'Uni']||'');geoCh('s'+P+'Uni');
-  set('UpaX',st[pre+'UpaX']||'');set('UniX',st[pre+'UniX']||'');set('PO',st[pre+'PO']||'');set('Vil',st[pre+'Vil']||'');
+  set('UpaX',st[pre+'UpaX']||'');set('UniX',st[pre+'UniX']||'');set('PO',st[pre+'PO']||'');set('Vil',st[pre+'Vil']||'');set('Mun',st[pre+'Mun']||'');set('Ward',st[pre+'Ward']||'');set('Type',st[pre+'Type']||'ইউনিয়ন');geoCh('s'+P+'Type');
 }
 
 /* ---------- automatic admission follow-up ---------- */
@@ -666,7 +697,7 @@ function stSave(){
   var name=$('#sName').value.trim(),father=$('#sFather').value.trim();if(!name||!father){toast('ছাত্র ও পিতার নাম লিখুন',true);return}
   var id=$('#sId').value,old=id?stById(id):null,o=old?clean(old):{};
   Object.assign(o,{name:name,father:father,mother:$('#sMother').value.trim(),phone:$('#sPhone').value.trim(),cls:$('#sCls').value,roll:$('#sRoll').value.trim(),adm:$('#sAdm').value,fee:num($('#sFee').value),startMonth:$('#sStart').value||($('#sAdm').value||todayISO()).slice(0,7),status:$('#sStatus')?$('#sStatus').value:'active',photo:($('#sPhoto')||{}).value||'',dob:$('#sDob').value,sec:$('#sSec').value.trim(),ses:$('#sSes').value.trim()});
-  Object.assign(o,geoRead('G'));var px=pxRead();Object.assign(o,px.o);if(px.same){o.paddr=o.addr;['Div','Dist','Upa','Uni','UpaX','UniX','PO','Vil'].forEach(function(k){o['p'+k]=o['g'+k]||''})}else Object.assign(o,geoRead('P'));
+  Object.assign(o,geoRead('G'));var px=pxRead();Object.assign(o,px.o);if(px.same){o.paddr=o.addr;['Div','Dist','Upa','Uni','UpaX','UniX','PO','Vil','Type','Mun','Ward'].forEach(function(k){o['p'+k]=o['g'+k]||''})}else Object.assign(o,geoRead('P'));
   if($('#sStatus')){if(o.status==='left'){o.kind=$('#sKind').value||'ঝরে পড়া';o.leftDate=$('#sLeftDate').value||todayISO();o.leftNote=$('#sLeftNote').value.trim()}else{o.kind='';o.leftDate='';o.leftNote=''}}
   if(!o.id)o.id=uid();
   if(!old&&!o.gcode)o.gcode=newCode();
@@ -680,7 +711,7 @@ function stView(id){
   extraInfo(s)+
   '<div class="card" style="margin-top:10px"><b>বকেয়া: <span style="color:'+(d.length?'#c0392b':'#0b6b4f')+'">'+(d.length?money(sumDue(d))+' ('+d.map(function(x){return monthLabel(x.m)}).join(', ')+')':'নেই ✅')+'</span></b></div>'+
   '<div class="card"><b>এই মাসের হাজিরা:</b> উপস্থিত '+bn(pr)+' • অনুপস্থিত '+bn(ab)+' • ছুটি '+bn(lv)+'</div>'+
-  '<div class="bar"><button class="btn grow" data-a="feeForm" data-id="'+id+'">💰 ফি আদায়</button><button class="btn sec grow" data-a="stForm" data-id="'+id+'">✏️ সম্পাদনা</button></div><div class="bar" style="flex-wrap:wrap"><button class="btn sec grow" data-a="idCard" data-id="'+id+'">🪪 আইডি কার্ড</button><button class="btn sec grow" data-a="tcForm" data-id="'+id+'">📄 ছাড়পত্র / সনদ</button><button class="btn sec grow" data-a="admPrint" data-id="'+id+'">🖨 ভর্তি ফরম</button><button class="btn sec grow" data-a="readm" data-id="'+id+'">🔁 পুনঃভর্তি</button></div>'+
+  '<div class="bar"><button class="btn grow" data-a="feeForm" data-id="'+id+'">💰 ফি আদায়</button><button class="btn sec grow" data-a="stForm" data-id="'+id+'">✏️ সম্পাদনা</button></div><div class="bar" style="flex-wrap:wrap"><button class="btn sec grow" data-a="idCard" data-id="'+id+'">🪪 আইডি কার্ড</button><button class="btn sec grow" data-a="tcForm" data-id="'+id+'">📄 ছাড়পত্র / সনদ</button><button class="btn sec grow" data-a="admPrint" data-id="'+id+'">🖨 ভর্তি ফরম</button><button class="btn sec grow" data-a="readm" data-id="'+id+'">🔁 পুনঃভর্তি</button><button class="btn sec grow" data-a="rcard" data-id="'+id+'">📑 রিপোর্ট কার্ড</button></div>'+
   '<div class="ttl" style="margin-top:8px">আদায়ের ইতিহাস</div>'+(pays.length?pays.slice(0,30).map(payRow).join(''):'<div class="empty">কোনো আদায় নেই</div>'));
 }
 
@@ -866,8 +897,8 @@ function calcResult(ex){
 }
 function examDetail(ex){
   var h='<div class="bar"><button class="btn sec sm" data-a="exBack">← সব পরীক্ষা</button><span class="grow"></span><button class="btn sec sm" data-a="exForm" data-id="'+ex.id+'">✏️ সম্পাদনা</button></div><div class="pg">'+esc(ex.name)+' <small style="font-size:14px;color:#4a555c">— '+esc(ex.cls)+'</small></div>';
-  h+='<div class="tabs"><button class="'+(UI.examTab==='marks'?'on':'')+'" data-a="etab" data-v="marks">নম্বর এন্ট্রি</button><button class="'+(UI.examTab==='result'?'on':'')+'" data-a="etab" data-v="result">ফলাফল ও মেধা তালিকা</button></div>';
-  return h+(UI.examTab==='marks'?marksTable(ex):resultView(ex));
+  h+='<div class="tabs"><button class="'+(UI.examTab==='marks'?'on':'')+'" data-a="etab" data-v="marks">নম্বর এন্ট্রি</button><button class="'+(UI.examTab==='result'?'on':'')+'" data-a="etab" data-v="result">ফলাফল ও মেধা তালিকা</button><button class="'+(UI.examTab==='rt'?'on':'')+'" data-a="etab" data-v="rt">পরীক্ষার রুটিন</button></div>';
+  return h+(UI.examTab==='marks'?marksTable(ex):UI.examTab==='rt'?exRoutine(ex):resultView(ex));
 }
 function marksTable(ex){
   var sts=activeSts(ex.cls);if(!sts.length)return'<div class="card empty">এই শ্রেণিতে কোনো সক্রিয় ছাত্র নেই</div>';
@@ -893,6 +924,37 @@ function resultView(ex){
 function sheetHTML(ex,r){
   var s=r.st,rows=r.subs.map(function(x){return'<tr><td>'+esc(x.n)+'</td><td class="n">'+bn(x.full)+'</td><td class="n">'+(x.has?bn(x.o):'—')+'</td><td>'+esc(x.g)+'</td><td>'+(x.pass?'উত্তীর্ণ':'অকৃতকার্য')+'</td></tr>'}).join('');
   return'<div class="pb">'+hdr()+'<h2>ফলাফল পত্র (মার্কশিট)</h2><div class="info2"><div>পরীক্ষা: <b>'+esc(ex.name)+'</b></div><div>শিক্ষাবর্ষ: <b>'+bn(esc(cfg().session))+'</b></div><div>ছাত্রের নাম: <b>'+esc(s.name)+'</b></div><div>শ্রেণি: <b>'+esc(s.cls)+'</b> • রোল: <b>'+bn(s.roll||'-')+'</b></div><div>পিতার নাম: <b>'+esc(s.father||'')+'</b></div>'+(r.pos?'<div>মেধা স্থান: <b>'+bn(r.pos)+'</b></div>':'')+'</div><table><tr><th>বিষয়</th><th class="n">পূর্ণমান</th><th class="n">প্রাপ্ত নম্বর</th><th>গ্রেড</th><th>ফল</th></tr>'+rows+'<tr><th>সর্বমোট</th><th class="n">'+bn(r.full)+'</th><th class="n">'+bn(r.tot)+'</th><th colspan="2"></th></tr></table><div class="info2" style="margin-top:10px"><div>শতকরা: <b>'+bn(Math.round(r.pct*10)/10)+'%</b></div><div>জিপিএ: <b>'+bn(r.gpa.toFixed(2))+'</b></div><div>গ্রেড: <b>'+esc(r.grade)+'</b></div><div>ফলাফল: <b>'+(r.fail?'অকৃতকার্য':'উত্তীর্ণ')+'</b></div></div><div class="sign"><span>শ্রেণি শিক্ষক</span><span>অভিভাবক</span><span>'+esc(cfg().head)+'</span></div></div>';
+}
+function exRtRows(ex){var r=ex.rt||{};return ex.subjects.map(function(s,i){return{n:s.n,d:(r[i]||{}).d||'',t:(r[i]||{}).t||''}}).filter(function(x){return x.d}).sort(function(a,b){return String(a.d).localeCompare(String(b.d))})}
+function exRoutine(ex){
+  var l=exRtRows(ex);
+  return'<div class="bar"><button class="btn" data-a="exRtForm">✏️ রুটিন তৈরি/সম্পাদনা</button>'+(l.length?'<button class="btn sec" data-a="exRtPrint">🖨 প্রিন্ট</button><button class="btn sec" data-a="exRtNotice">📢 নোটিশ বোর্ডে দিন</button>':'')+'</div><div class="card">'+(l.length?l.map(function(x){return'<div class="row"><div class="info"><b>'+esc(x.n)+'</b><small>'+fdate(x.d)+(x.t?' • '+esc(x.t):'')+'</small></div></div>'}).join(''):'<div class="empty">রুটিন এখনও তৈরি হয়নি</div>')+'</div>';
+}
+function exRtForm(){
+  var ex=exById(UI.exam);if(!ex)return;var r=ex.rt||{};
+  modal('<h3>🗓 পরীক্ষার রুটিন — '+esc(ex.name)+'</h3>'+ex.subjects.map(function(s,i){return'<div class="card" style="margin:6px 0"><b>'+esc(s.n)+'</b><div class="grid g2"><div><label>তারিখ</label><input type="date" id="rtD'+i+'" value="'+esc((r[i]||{}).d||'')+'"></div><div><label>সময়</label><input id="rtT'+i+'" value="'+esc((r[i]||{}).t||'')+'" placeholder="১০:০০–১২:০০"></div></div></div>'}).join('')+'<div class="bar" style="margin-top:12px"><button class="btn grow" data-a="exRtSave">💾 সংরক্ষণ</button></div>');
+}
+function exRtSave(){
+  var ex=exById(UI.exam);if(!ex)return;var o=clean(ex),rt={};
+  ex.subjects.forEach(function(s,i){var d=$('#rtD'+i).value,t=$('#rtT'+i).value.trim();if(d||t)rt[i]={d:d,t:t}});
+  o.rt=rt;put('exams',o).then(function(){toast('রুটিন সংরক্ষিত ✅')});closeModal();
+}
+function exRtText(ex){return'পরীক্ষা: '+ex.name+' ('+ex.cls+')\n'+exRtRows(ex).map(function(x){return fdate(x.d)+(x.t?' '+x.t:'')+' — '+x.n}).join('\n')}
+function exRtPrint(){
+  var ex=exById(UI.exam);if(!ex)return;var l=exRtRows(ex);
+  printHTML('<div class="pb">'+hdr()+'<h2>পরীক্ষার রুটিন — '+esc(ex.name)+' ('+esc(ex.cls)+')</h2><table><tr><th>ক্রম</th><th>তারিখ</th><th>সময়</th><th>বিষয়</th></tr>'+l.map(function(x,i){return'<tr><td>'+bn(i+1)+'</td><td>'+fdate(x.d)+'</td><td>'+esc(x.t||'')+'</td><td>'+esc(x.n)+'</td></tr>'}).join('')+'</table><div class="sign"><span>পরীক্ষা নিয়ন্ত্রক</span><span>'+esc(cfg().head)+'</span></div></div>');
+}
+function exRtNotice(){
+  var ex=exById(UI.exam);if(!ex)return;
+  put('notices',{id:uid(),title:'পরীক্ষার রুটিন — '+ex.name+' ('+ex.cls+')',body:exRtText(ex),date:todayISO(),pin:false,aud:'সবার জন্য',kind:'পরীক্ষার বিজ্ঞপ্তি'}).then(function(){toast('নোটিশ বোর্ডে দেওয়া হয়েছে ✅')});
+}
+function rcPrint(sid){
+  var s=stById(sid);if(!s)return;
+  var exs=S.exams.filter(function(e){return e.cls===s.cls}).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))}),rows=[],sp=0,sn=0;
+  exs.forEach(function(e){var r=calcResult(e).filter(function(x){return x.st.id===sid})[0];if(!r||!r.entered)return;sp+=r.pct;sn++;rows.push('<tr><td>'+esc(e.name)+'</td><td>'+(e.date?fdate(e.date):'')+'</td><td class="n">'+bn(r.tot)+'/'+bn(r.full)+'</td><td class="n">'+bn(Math.round(r.pct*10)/10)+'</td><td class="n">'+bn(r.gpa.toFixed(2))+'</td><td>'+esc(r.grade)+'</td><td>'+(r.pos?bn(r.pos):'—')+'</td><td>'+(r.fail?'অকৃতকার্য':'উত্তীর্ণ')+'</td></tr>')});
+  if(!rows.length){toast('এই ছাত্রের কোনো পরীক্ষার নম্বর পাওয়া যায়নি',true);return}
+  var m=money,att=0,ab=0;S.attendance.forEach(function(r){if(r.rec&&r.rec[sid]){if(r.rec[sid]==='p')att++;else if(r.rec[sid]==='a')ab++}});
+  printHTML('<div class="pb">'+hdr()+'<h2>পরীক্ষার রিপোর্ট কার্ড</h2><div class="info2"><div>ছাত্রের নাম: <b>'+esc(s.name)+'</b></div><div>শ্রেণি: <b>'+esc(s.cls)+'</b> • রোল: <b>'+bn(s.roll||'-')+'</b></div><div>পিতার নাম: <b>'+esc(s.father||'')+'</b></div><div>শিক্ষাবর্ষ: <b>'+bn(esc(s.ses||cfg().session||''))+'</b></div></div><table><tr><th>পরীক্ষা</th><th>তারিখ</th><th class="n">প্রাপ্ত/পূর্ণ</th><th class="n">%</th><th class="n">জিপিএ</th><th>গ্রেড</th><th>মেধা</th><th>ফল</th></tr>'+rows.join('')+'<tr><th colspan="3">গড় শতকরা</th><th class="n">'+bn(Math.round(sp/sn*10)/10)+'</th><th colspan="4"></th></tr></table><div class="info2" style="margin-top:10px"><div>মোট উপস্থিতি: <b>'+bn(att)+'</b> দিন • অনুপস্থিত: <b>'+bn(ab)+'</b> দিন</div></div><div class="sign"><span>অভিভাবকের স্বাক্ষর</span><span>শ্রেণি শিক্ষক</span><span>'+esc(cfg().head)+'</span></div></div>');
 }
 function meritPrint(){
   var ex=exById(UI.exam),rs=calcResult(ex).filter(function(r){return r.entered}).sort(function(a,b){if(!!a.pos!==!!b.pos)return a.pos?-1:1;return a.pos?a.pos-b.pos:byRoll(a.st,b.st)});
@@ -943,11 +1005,22 @@ function vMore(){
 /* ---------- NOTICES / PEOPLE / PAYREQ / PUBLISH ---------- */
 function vNotices(){
   var l=S.notices.slice().sort(function(a,b){return(b.pin?1:0)-(a.pin?1:0)||String(b.date).localeCompare(String(a.date))});
-  return'<div class="pg">📢 নোটিশ বোর্ড</div><div class="note">এখানকার নোটিশ অভিভাবকদের পাবলিক পাতায় সবাই দেখতে পাবে — গোপন তথ্য লিখবেন না।</div><div class="bar"><button class="btn" data-a="nForm">➕ নতুন নোটিশ</button></div><div class="card">'+(l.length?l.map(function(n){return'<div class="row"><div class="info"><b>'+(n.pin?'📌 ':'')+esc(n.title)+'</b><small>'+fdate(n.date)+'</small><small>'+esc((n.body||'').slice(0,110))+'</small></div><div class="acts"><button class="btn sm sec" data-a="nForm" data-id="'+n.id+'">✏️</button></div></div>'}).join(''):'<div class="empty">কোনো নোটিশ নেই</div>')+'</div>';
+  return'<div class="pg">📢 নোটিশ বোর্ড</div><div class="note">এখানকার নোটিশ অভিভাবকদের পাবলিক পাতায় সবাই দেখতে পাবে — গোপন তথ্য লিখবেন না।</div><div class="bar"><button class="btn" data-a="nForm">➕ নতুন নোটিশ</button></div><div class="card">'+(l.length?l.map(function(n){return'<div class="row"><div class="info"><b>'+(n.pin?'📌 ':'')+esc(n.title)+'</b><small>'+fdate(n.date)+' • '+esc(n.kind||'সাধারণ নোটিশ')+' • '+esc(n.aud||'সবার জন্য')+'</small><small>'+esc((n.body||'').slice(0,110))+'</small></div><div class="acts"><button class="btn sm sec" data-a="nSend" data-id="'+n.id+'" title="WhatsApp/SMS-এ পাঠান">📤</button><button class="btn sm sec" data-a="nForm" data-id="'+n.id+'">✏️</button></div></div>'}).join(''):'<div class="empty">কোনো নোটিশ নেই</div>')+'</div>';
 }
 function nForm(id){var n=id?S.notices.filter(function(x){return x.id===id})[0]:null;
-  modal('<h3>'+(n?'✏️ নোটিশ সম্পাদনা':'➕ নতুন নোটিশ')+'</h3><input type="hidden" id="nId" value="'+(n?n.id:'')+'"><label>শিরোনাম *</label><input id="nTitle" value="'+esc(n?n.title:'')+'"><label>বিস্তারিত</label><textarea id="nBody" rows="5">'+esc(n?n.body||'':'')+'</textarea><div class="grid g2"><div><label>তারিখ</label><input id="nDate" type="date" value="'+(n?n.date:todayISO())+'"></div><div><label>উপরে স্থির রাখুন</label><select id="nPin"><option value="0">না</option><option value="1"'+(n&&n.pin?' selected':'')+'>হ্যাঁ 📌</option></select></div></div><div class="bar" style="margin-top:14px"><button class="btn grow" data-a="nSave">💾 সংরক্ষণ</button>'+(n?'<button class="btn red" data-a="nDel" data-id="'+n.id+'">মুছুন</button>':'')+'</div>');}
-function nSave(){var t=$('#nTitle').value.trim();if(!t){toast('শিরোনাম লিখুন',true);return}var id=$('#nId').value;put('notices',{id:id||uid(),title:t,body:$('#nBody').value.trim(),date:$('#nDate').value||todayISO(),pin:$('#nPin').value==='1'}).then(function(){toast('নোটিশ সংরক্ষিত ✅')});closeModal()}
+  modal('<h3>'+(n?'✏️ নোটিশ সম্পাদনা':'➕ নতুন নোটিশ')+'</h3><input type="hidden" id="nId" value="'+(n?n.id:'')+'"><label>শিরোনাম *</label><input id="nTitle" value="'+esc(n?n.title:'')+'"><label>বিস্তারিত</label><textarea id="nBody" rows="5">'+esc(n?n.body||'':'')+'</textarea><div class="grid g2"><div><label>তারিখ</label><input id="nDate" type="date" value="'+(n?n.date:todayISO())+'"></div><div><label>উপরে স্থির রাখুন</label><select id="nPin"><option value="0">না</option><option value="1"'+(n&&n.pin?' selected':'')+'>হ্যাঁ 📌</option></select></div></div><div class="grid g2"><div><label>কার জন্য</label><select id="nAud">'+['সবার জন্য','শিক্ষার্থী','অভিভাবক','শিক্ষক'].map(function(a){return'<option'+((n?n.aud||'সবার জন্য':'সবার জন্য')===a?' selected':'')+'>'+a+'</option>'}).join('')+'</select></div><div><label>ধরন</label><select id="nKind">'+['সাধারণ নোটিশ','সভার বিজ্ঞপ্তি','পরীক্ষার বিজ্ঞপ্তি','ছুটির বিজ্ঞপ্তি'].map(function(a){return'<option'+((n?n.kind||'সাধারণ নোটিশ':'সাধারণ নোটিশ')===a?' selected':'')+'>'+a+'</option>'}).join('')+'</select></div></div>'+'<div class="bar" style="margin-top:14px"><button class="btn grow" data-a="nSave">💾 সংরক্ষণ</button>'+(n?'<button class="btn red" data-a="nDel" data-id="'+n.id+'">মুছুন</button>':'')+'</div>');}
+function nSave(){var t=$('#nTitle').value.trim();if(!t){toast('শিরোনাম লিখুন',true);return}var id=$('#nId').value;put('notices',{id:id||uid(),title:t,body:$('#nBody').value.trim(),date:$('#nDate').value||todayISO(),pin:$('#nPin').value==='1',aud:$('#nAud').value,kind:$('#nKind').value}).then(function(){toast('নোটিশ সংরক্ষিত ✅')});closeModal()}
+function nSend(id){
+  var n=S.notices.filter(function(x){return x.id===id})[0];if(!n)return;
+  var aud=n.aud||'সবার জন্য',L=[];
+  var w=function(ph){ph=String(ph||'').replace(/\D/g,'');return ph.length===11&&ph[0]==='0'?'88'+ph:ph};
+  if(aud!=='শিক্ষক')activeSts().forEach(function(s){if(s.phone)L.push({n:s.name+' ('+s.cls+') — অভিভাবক',p:s.phone})});
+  if(aud==='শিক্ষক'||aud==='সবার জন্য')actStf().forEach(function(x){if(x.phone)L.push({n:x.name+' — '+(x.role||'শিক্ষক'),p:x.phone})});
+  var tx='['+(n.kind||'নোটিশ')+'] '+n.title+(n.body?'\n'+n.body:'')+'\n— '+cfg().name;
+  if(!L.length){toast('কারো মোবাইল নম্বর সংরক্ষিত নেই',true);return}
+  var nums=L.map(function(x){return String(x.p).replace(/\D/g,'')}).filter(Boolean).filter(function(v,i,a){return a.indexOf(v)===i});
+  modal('<h3>📤 নোটিশ পাঠান</h3><div class="note">প্রাপক: <b>'+esc(aud)+'</b> • '+bn(L.length)+' জন। WhatsApp-এ একজন একজন করে চাপুন; SMS একসাথে সবাইকে যাবে (ফোনের সিম থেকে)।</div><div class="bar"><a class="btn grow" style="text-decoration:none;text-align:center" href="sms:'+nums.join(',')+'?body='+encodeURIComponent(tx)+'">💬 সবাইকে SMS</a></div><div class="card" style="max-height:48vh;overflow:auto">'+L.map(function(x){return'<div class="row"><div class="info"><b style="font-size:14px">'+esc(x.n)+'</b><small>'+bn(esc(x.p))+'</small></div><div class="acts"><a class="btn sm" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/'+w(x.p)+'?text='+encodeURIComponent(tx)+'">WhatsApp</a></div></div>'}).join('')+'</div>');
+}
 function pvOf(id){return S.peopriv.filter(function(x){return x.id===id})[0]||{}}
 var PK={advisor:'উপদেষ্টা পরিষদ',committee:'কার্যকরী কমিটি',general:'সাধারণ সদস্য',lifetime:'আজীবন দাতা সদস্য',founder:'প্রতিষ্ঠাতা সদস্য'},PKPUB={advisor:1,committee:1,founder:1,general:0,lifetime:0};
 function pAll(){var m={};S.people.forEach(function(p){m[p.id]=Object.assign({},p)});S.peopriv.forEach(function(v){if(v.name)m[v.id]=Object.assign(m[v.id]||{},v);else if(m[v.id])Object.assign(m[v.id],v)});return Object.keys(m).map(function(k){return m[k]})}
@@ -1326,7 +1399,7 @@ document.addEventListener('click',function(e){
     case'exDel':ask('এই পরীক্ষা ও এর সব নম্বর মুছবেন?','মুছুন',function(){del('exams',id);closeModal();UI.exam=null;LOCK=false;render()});break;
     case'exOpen':UI.exam=id;UI.examTab='marks';render();window.scrollTo(0,0);break;
     case'exBack':UI.exam=null;LOCK=false;PEND=false;render();break;
-    case'etab':UI.examTab=v;LOCK=false;render();break;
+    case'etab':UI.examTab=v;LOCK=false;render();break;case'exRtForm':exRtForm();break;case'exRtSave':exRtSave();break;case'exRtPrint':exRtPrint();break;case'exRtNotice':exRtNotice();break;case'rcard':rcPrint(id);break;case'nSend':nSend(id);break;
     case'mkSave':mkSave();break;
     case'sheet':var ex=exById(UI.exam),r=calcResult(ex).filter(function(x){return x.st.id===id})[0];if(r)printHTML(sheetHTML(ex,r));break;
     case'allSheets':var ex2=exById(UI.exam),rr=calcResult(ex2).filter(function(x){return x.entered});printHTML(rr.map(function(x){return sheetHTML(ex2,x)}).join(''));break;
@@ -1377,7 +1450,7 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('change',function(e){
   var t=e.target,id=t.id;
-  if(/^s[GP](Div|Dist|Upa|Uni)$/.test(id)){geoCh(id);return}
+  if(/^s[GP](Div|Dist|Upa|Uni|Type)$/.test(id)){geoCh(id);return}
   if(id==='rc'){UI.rc=t.value;render()}else if(id==='dcat'){UI.dcat=t.value;render()}else if(id==='sd'){UI.sd=t.value||todayISO();render()}else if(id==='rcl'){UI.rcl=t.value}else if(id==='rm'){UI.rm=t.value||UI.rm}else if(id==='gImgFile'&&t.files[0]){readDocImg(t.files[0],function(u){$('#g_img').value=u;$('#gImgPrev').innerHTML='<img src="'+u+'" style="max-width:100%;border-radius:8px" alt="">'})}else if(id==='sc'){UI.sc=t.value;render()}else if(id==='ss'){UI.ss=t.value;render()}else if(id==='sg'){UI.sg=t.value;render()}else if(id==='pk'||id==='pst'){UI[id]=t.value;render()}else if(id==='sSame'){$('#sPBox').style.display=t.checked?'none':'block'}else if(id==='ppKind'){$('#ppPub').value=PKPUB[t.value]?'1':'0'}
   else if(id==='dt'){UI.dt=t.value;render()}else if(id==='dmo'){UI.dmo=t.value;render()}else if(id==='tm'){UI.tm=t.value||UI.tm;render()}
   else if(/^(s|t|pp)PhotoFile$/.test(id)&&t.files[0]){var px=id.replace('PhotoFile','');readPhoto(t.files[0],function(u){$('#'+px+'Photo').value=u;$('#'+px+'Prev').innerHTML='<img src="'+u+'" alt="">'})}
@@ -1413,7 +1486,7 @@ function pubRender(){
   var h='<div class="ph"><img src="'+LOGO+'" alt=""><h1>'+esc(nm)+'</h1>'+(I.addr?'<small>'+esc(I.addr)+'</small>':'')+(I.phone?'<small>মোবাইল: '+bn(esc(I.phone))+'</small>':'')+'</div><div class="pw"><div class="pt">'+[['notice','📢 নোটিশ'],['guard','👨‍🎓 অভিভাবক'],['pay','💳 অর্থ প্রদান'],['team','🏛️ কমিটি']].map(function(t){return'<button class="'+(PUB.tab===t[0]?'on':'')+'" data-a="pubTab" data-v="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div>';
   if(PUB.err)h+='<div class="note">তথ্য আনা যায়নি — ইন্টারনেট সংযোগ দেখুন, অথবা মাদ্রাসা কর্তৃপক্ষ এখনও পাবলিক পাতা চালু করেননি।</div>';
   if(PUB.tab==='notice'){
-    var n=(PUB.notices||[]).slice().sort(function(x,y){return(y.pin?1:0)-(x.pin?1:0)||String(y.date).localeCompare(String(x.date))});
+    var n=(PUB.notices||[]).filter(function(x){return x.aud!=='শিক্ষক'}).slice().sort(function(x,y){return(y.pin?1:0)-(x.pin?1:0)||String(y.date).localeCompare(String(x.date))});
     h+=PUB.notices===null?'<div class="empty">লোড হচ্ছে…</div>':n.length?n.map(function(x){return'<div class="nt"><b>'+(x.pin?'📌 ':'')+esc(x.title)+'</b><small> • '+fdate(x.date)+'</small><div style="white-space:pre-wrap;margin-top:4px">'+esc(x.body||'')+'</div></div>'}).join(''):'<div class="empty">এখন কোনো নোটিশ নেই</div>';
   }else if(PUB.tab==='guard'){
     var sv='';try{sv=localStorage.getItem('mdr-gcode')||''}catch(e){}
