@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b6b4f"><title>শিক্ষক পোর্টাল</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
+:root{--g:#0b6b4f;--bg:#eef6f2;--ln:#d6e5dd;--mu:#667a72}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);font-family:'Noto Sans Bengali',system-ui,sans-serif;font-size:15px;color:#17332b}
+#app{max-width:560px;margin:0 auto;padding-bottom:76px;min-height:100vh}
+header{background:var(--g);color:#fff;padding:12px 14px;position:sticky;top:0;z-index:5}header b{font-size:17px;display:block}header small{opacity:.85}
+.card{background:#fff;border-radius:14px;padding:13px;margin:10px 12px;box-shadow:0 2px 6px rgba(0,60,40,.07)}
+.row{padding:9px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}.row small{display:block;color:var(--mu);font-size:12.5px}
+label{display:block;font-size:12.5px;color:var(--mu);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:11px;border:1.5px solid var(--ln);border-radius:11px;font:inherit}
+.btn{display:block;width:100%;border:0;border-radius:12px;background:var(--g);color:#fff;padding:12px;font:700 15.5px inherit;font-family:inherit;margin-top:12px;cursor:pointer}.btn.s{background:#e1f0e9;color:var(--g)}.btn.r{background:#c0392b}.btn.sm{display:inline-block;width:auto;padding:6px 12px;font-size:13px;margin:0}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--ln);display:flex;justify-content:center}
+nav div{display:flex;max-width:560px;width:100%}nav button{flex:1;border:0;background:none;padding:7px 0 6px;font:500 11px inherit;font-family:inherit;color:var(--mu)}nav button i{display:block;font-style:normal;font-size:19px}nav button.on{color:var(--g);font-weight:700}
+.bd{display:inline-block;border-radius:8px;padding:1px 8px;font-size:11.5px;font-weight:600;background:#d9f3e5;color:#13794a}.bd.p{background:#fff1d6;color:#a76a00}.bd.x{background:#fde0de;color:#b02a24}
+.empty{text-align:center;color:var(--mu);padding:22px}.note{background:#fff7e0;border:1px solid #f1dc9c;border-radius:12px;padding:10px 12px;margin:10px 12px;font-size:13.5px}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#17332b;color:#fff;padding:10px 16px;border-radius:12px;display:none;z-index:9;max-width:90%}
+.auth{padding:30px 18px;max-width:430px;margin:0 auto}.auth h2{text-align:center;color:var(--g)}
+.st{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 12px}.st div{background:#fff;border-radius:12px;padding:10px}.st small{color:var(--mu);display:block}.st b{font-size:18px;color:var(--g)}
+</style></head><body>
+<div id="app"></div><div id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+var CFG={apiKey:"AIzaSyCqoKCgjLXZ3RnAWbClpwHGWzL6_reOQ0g",authDomain:"gausia-taiyabia-madrasa.firebaseapp.com",projectId:"gausia-taiyabia-madrasa",storageBucket:"gausia-taiyabia-madrasa.firebasestorage.app",messagingSenderId:"116973994642",appId:"1:116973994642:web:15304bc34ba59bbb815c4b"};
+var DOM='@teacher.madrasa.app',BND='০১২৩৪৫৬৭৮৯';
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var bn=function(s){return String(s).replace(/\d/g,function(d){return BND[d]})};
+var num=function(v){var n=parseFloat(String(v).replace(/[০-৯]/g,function(d){return BND.indexOf(d)}).replace(/,/g,''));return isNaN(n)?0:n};
+var money=function(n){return'৳ '+bn(Math.round(num(n)*100)/100)};
+var fdate=function(i){if(!i)return'';var a=String(i).split('-');return bn(a[2]+'/'+a[1]+'/'+a[0])};
+var today=function(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+var MN=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+var mlab=function(m){var a=String(m||'').split('-');return a[1]?MN[+a[1]-1]+' '+bn(a[0]):''};
+var DAYS=['শনিবার','রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার'];
+var LVT=['নৈমিত্তিক ছুটি','অসুস্থতাজনিত ছুটি','অর্জিত ছুটি','মাতৃত্বকালীন ছুটি','বিনা বেতনে ছুটি','বিশেষ ছুটি','অন্যান্য'],LVQ={'নৈমিত্তিক ছুটি':10,'অসুস্থতাজনিত ছুটি':14,'অর্জিত ছুটি':30};
+function toast(m){var t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},3000)}
+var auth,fs,base,U=null,SID='',D={me:null,leaves:[],duties:[],routine:[],evals:[],cash:[],hd:{sup:[],asst:[],insp:[]},notices:[]},page='home',reg=false,unsubs=[],stat='';
+function days(a,b){return Math.max(1,Math.round((new Date(b||a)-new Date(a))/864e5)+1)}
+function col(n){return base.collection(n)}
+function watch(q,f){unsubs.push(q.onSnapshot(function(s){f(s.docs.map(function(d){return d.data()}));render()},function(e){toast('তথ্য পড়া যাচ্ছে না ('+(e.code||'')+')')}))}
+function start(){
+  firebase.initializeApp(CFG);auth=firebase.auth();fs=firebase.firestore();base=fs.collection('madrasa').doc('main');
+  auth.onAuthStateChanged(function(u){unsubs.forEach(function(f){try{f()}catch(e){}});unsubs=[];U=u;SID='';stat='';page='home';
+    if(!u){render();return}
+    base.collection('tlink').doc(u.uid).get().then(function(s){if(s.exists){SID=s.data().sid;listen()}else stat='wait';render()}).catch(function(e){stat='err';render()});
+  });
+}
+function listen(){
+  base.collection('staff').doc(SID).get().then(function(s){D.me=s.exists?s.data():null;render()}).catch(function(){});
+  watch(col('leaves').where('sid','==',SID),function(l){D.leaves=l.sort(function(a,b){return String(b.from).localeCompare(String(a.from))})});
+  watch(col('duties').where('sid','==',SID),function(l){D.duties=l});
+  watch(col('routine').where('tid','==',SID),function(l){D.routine=l});
+  watch(col('evals').where('sid','==',SID),function(l){D.evals=l.sort(function(a,b){return String(b.month).localeCompare(String(a.month))})});
+  watch(col('cash').where('stf','==',SID),function(l){D.cash=l.sort(function(a,b){return String(b.date).localeCompare(String(a.date))})});
+  ['sup','asst','insp'].forEach(function(k){watch(col('halldu').where(k,'==',SID),function(l){D.hd[k]=l})});
+  watch(col('notices'),function(l){D.notices=l.sort(function(a,b){return String(b.date).localeCompare(String(a.date))})});
+}
+function used(t,y){var n=0;D.leaves.forEach(function(x){if(x.type===t&&x.status==='ok'&&String(x.from).slice(0,4)===y)n+=num(x.days)||1});return n}
+function hallList(){var m={};['sup','asst','insp'].forEach(function(k){D.hd[k].forEach(function(x){m[x.id]=Object.assign({},x,{role:{sup:'হল সুপার',asst:'সহকারী হল সুপার',insp:'কক্ষ পরিদর্শক'}[k]})})});return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))})}
+function authV(){
+  return'<div class="auth"><h2>👨‍🏫 শিক্ষক পোর্টাল</h2><p style="text-align:center;color:var(--mu);margin-top:-8px">'+(reg?'নতুন অ্যাকাউন্ট':'লগইন')+'</p>'+(reg?'<label>আপনার নাম</label><input id="aN">':'')+'<label>মোবাইল নম্বর</label><input id="aM" inputmode="tel" maxlength="11" placeholder="01XXXXXXXXX"><label>পিন (৬ সংখ্যা)</label><input id="aP" type="password" inputmode="numeric" maxlength="6">'+(reg?'<label>পিন আবার</label><input id="aP2" type="password" inputmode="numeric" maxlength="6">':'')+'<button class="btn" data-a="'+(reg?'doReg':'doIn')+'">'+(reg?'অ্যাকাউন্ট খুলুন':'লগইন')+'</button><button class="btn s" data-a="tog">'+(reg?'আগে থেকে অ্যাকাউন্ট আছে? লগইন':'নতুন অ্যাকাউন্ট খুলুন')+'</button>'+(reg?'<div class="note" style="margin:14px 0 0">অ্যাকাউন্ট খোলার পর মাদ্রাসার অ্যাডমিন আপনাকে আপনার শিক্ষক-প্রোফাইলের সাথে যুক্ত করলে সব তথ্য দেখতে পাবেন। রেজিস্ট্রেশনে মাদ্রাসায় দেওয়া মোবাইল নম্বরই ব্যবহার করুন।</div>':'')+'</div>';
+}
+function render(){
+  var a=$('#app');if(!a)return;
+  var fid=document.activeElement&&document.activeElement.id,fv=document.activeElement&&document.activeElement.value;
+  if(!CFG){a.innerHTML='<div class="empty">Firebase সেটিং পাওয়া যায়নি</div>';return}
+  if(!U){a.innerHTML=authV();return}
+  if(!SID){a.innerHTML='<header><b>শিক্ষক পোর্টাল</b></header><div class="card"><b>'+(stat==='err'?'তথ্য পড়া যায়নি':'অ্যাডমিনের সংযুক্তির অপেক্ষায়')+'</b><div class="row" style="border:0">'+(stat==='err'?'ইন্টারনেট বা নিরাপত্তা রুলস যাচাই করুন।':'আপনার অনুরোধ অ্যাডমিনের কাছে পৌঁছেছে। তিনি আপনাকে শিক্ষক-প্রোফাইলের সাথে যুক্ত করলে এই পাতায় আপনার সব তথ্য দেখা যাবে।')+'</div></div><div style="padding:0 12px"><button class="btn s" data-a="out">লগ আউট</button></div>';return}
+  var me=D.me||{},P={home:vHome,leave:vLeave,duty:vDuty,routine:vRoutine,pay:vPay,me:vMe}[page]||vHome;
+  var T=[['home','🏠','হোম'],['leave','🏖️','ছুটি'],['duty','📋','দায়িত্ব'],['routine','🕘','রুটিন'],['pay','💰','বেতন'],['me','👤','আমি']];
+  a.innerHTML='<header><b>'+esc(me.name||'শিক্ষক পোর্টাল')+'</b><small>'+esc(me.role||'')+'</small></header>'+P()+'<nav><div>'+T.map(function(t){return'<button class="'+(page===t[0]?'on':'')+'" data-a="pg" data-v="'+t[0]+'"><i>'+t[1]+'</i>'+t[2]+'</button>'}).join('')+'</div></nav>';
+  if(fid&&$('#'+fid)&&$('#'+fid).tagName!=='SELECT'){var e=$('#'+fid);e.focus()}
+}
+function vHome(){
+  var t=today(),y=t.slice(0,4),pl=D.leaves.filter(function(x){return x.status==='pending'}).length,od=D.duties.filter(function(x){return x.status!=='সম্পন্ন'&&x.status!=='বাতিল'}),uh=hallList().filter(function(x){return x.date>=t});
+  return'<div class="st"><div><small>নৈমিত্তিক ছুটি অবশিষ্ট</small><b>'+bn(LVQ['নৈমিত্তিক ছুটি']-used('নৈমিত্তিক ছুটি',y))+' দিন</b></div><div><small>অপেক্ষমাণ আবেদন</small><b>'+bn(pl)+'টি</b></div><div><small>চলমান দায়িত্ব</small><b>'+bn(od.length)+'টি</b></div><div><small>আসন্ন হল ডিউটি</small><b>'+bn(uh.length)+'টি</b></div></div>'+
+  (uh.length?'<div class="card"><b>📝 আসন্ন হল ডিউটি</b>'+uh.slice(0,3).map(function(x){return'<div class="row">'+fdate(x.date)+' • '+esc(x.time)+' • কক্ষ '+bn(esc(x.room))+'<small>'+esc(x.role)+' — '+esc(x.exam||'')+'</small></div>'}).join('')+'</div>':'')+
+  '<div class="card"><b>📢 নোটিশ</b>'+(D.notices.length?D.notices.slice(0,5).map(function(n){return'<div class="row"><b>'+esc(n.title)+'</b><small>'+fdate(n.date)+'</small><div style="font-size:13.5px;margin-top:3px">'+esc((n.body||'').slice(0,160))+'</div></div>'}).join(''):'<div class="empty">কোনো নোটিশ নেই</div>')+'</div>';
+}
+function vLeave(){
+  var y=today().slice(0,4),B=Object.keys(LVQ).map(function(k){var u=used(k,y);return'<div><small>'+k.replace(' ছুটি','')+'</small><b>'+bn(LVQ[k]-u)+'</b> / '+bn(LVQ[k])+'</div>'}).join('');
+  var bd={pending:['অপেক্ষমাণ','p'],ok:['অনুমোদিত',''],no:['বাতিল','x'],cancelled:['নিজে বাতিল','x']};
+  return'<div class="st">'+B+'</div><div class="card"><b>➕ ছুটির আবেদন</b><label>ধরন</label><select id="lT">'+LVT.map(function(t){return'<option>'+t+'</option>'}).join('')+'</select><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>শুরু</label><input id="lF" type="date" value="'+today()+'"></div><div><label>শেষ</label><input id="lE" type="date"></div></div><label>কারণ</label><textarea id="lR" rows="2"></textarea><button class="btn" data-a="applyLv">আবেদন পাঠান</button></div><div class="card"><b>আমার আবেদনসমূহ</b>'+(D.leaves.length?D.leaves.map(function(x){var b=bd[x.status]||bd.pending;return'<div class="row"><b>'+esc(x.type)+' <span class="bd '+b[1]+'">'+b[0]+'</span></b><small>'+fdate(x.from)+(x.to&&x.to!==x.from?' – '+fdate(x.to):'')+' • '+bn(x.days||1)+' দিন</small>'+(x.status==='pending'?'<button class="btn sm s" style="margin-top:6px" data-a="cancelLv" data-id="'+x.id+'">বাতিল করুন</button>':'')+'</div>'}).join(''):'<div class="empty">কোনো আবেদন নেই</div>')+'</div>';
+}
+function vDuty(){
+  var h=hallList();
+  return'<div class="card"><b>📋 আমার দায়িত্ব</b>'+(D.duties.length?D.duties.sort(function(a,b){return String(b.given).localeCompare(String(a.given))}).map(function(x){return'<div class="row"><b>'+esc(x.title)+' <span class="bd '+(x.status==='সম্পন্ন'?'':'p')+'">'+esc(x.status||'চলমান')+'</span></b><small>'+esc(x.cat||'')+' • প্রদান '+fdate(x.given)+(x.due?' • শেষ '+fdate(x.due):'')+'</small>'+(x.report?'<small>📝 '+esc(x.report)+'</small>':'')+'</div>'}).join(''):'<div class="empty">কোনো দায়িত্ব নেই</div>')+'</div><div class="card"><b>📝 হল ডিউটি</b>'+(h.length?h.map(function(x){return'<div class="row">'+fdate(x.date)+' • '+esc(x.time)+' • কক্ষ '+bn(esc(x.room))+'<small>'+esc(x.role)+' — '+esc(x.exam||'')+' • '+esc(x.cls||'')+'</small></div>'}).join(''):'<div class="empty">কোনো হল ডিউটি নেই</div>')+'</div>';
+}
+function vRoutine(){
+  var any=DAYS.some(function(d){return D.routine.some(function(x){return x.day===d})});
+  return DAYS.map(function(d){var r=D.routine.filter(function(x){return x.day===d}).sort(function(a,b){return String(a.time).localeCompare(String(b.time))});return r.length?'<div class="card"><b>'+d+'</b>'+r.map(function(x){return'<div class="row">'+bn(esc(x.time))+'<small>'+esc(x.cls)+' — '+esc(x.subject)+'</small></div>'}).join('')+'</div>':''}).join('')||'<div class="card empty">আপনার নামে কোনো রুটিন নেই</div>';
+}
+function vPay(){
+  var me=D.me||{},ev=D.evals;
+  return'<div class="card"><b>💰 বেতন</b><div class="row" style="border:0">মাসিক বেতন: <b>'+money(me.salary)+'</b></div></div><div class="card"><b>প্রাপ্ত বেতন ও অগ্রিম</b>'+(D.cash.length?D.cash.map(function(c){return'<div class="row"><b>'+money(num(c.amt)+num(c.advcut))+'</b> '+(c.adv?'<span class="bd p">অগ্রিম</span>':c.sm?'<span class="bd">'+mlab(c.sm)+'</span>':'')+'<small>'+fdate(c.date)+(c.advcut?' • অগ্রিম কর্তন '+money(c.advcut):'')+'</small></div>'}).join(''):'<div class="empty">কোনো রেকর্ড নেই</div>')+'</div>'+(ev.length?'<div class="card"><b>⭐ আমার মূল্যায়ন</b>'+ev.map(function(x){return'<div class="row">'+mlab(x.month)+' — <b>'+bn(x.total||0)+'/৪০</b>'+(x.remark?'<small>'+esc(x.remark)+'</small>':'')+'</div>'}).join('')+'</div>':'');
+}
+function vMe(){
+  var m=D.me||{},R=function(a,b){return b?'<div class="row"><small>'+a+'</small>'+esc(b)+'</div>':''};
+  return'<div class="card"><b>👤 আমার তথ্য</b>'+R('নাম',m.name)+R('কর্মচারী আইডি',m.eid)+R('পদবি',m.role)+R('বিভাগ',m.dept)+R('মোবাইল',m.phone)+R('যোগদান',m.join?fdate(m.join):'')+R('চাকরির ধরন',m.jtype)+R('শিক্ষাগত যোগ্যতা',m.qual)+R('প্রশিক্ষণ',m.train)+R('ঠিকানা',m.addr)+'<div class="note" style="margin:10px 0 0">তথ্যে ভুল থাকলে মাদ্রাসার অফিসে জানান।</div></div><div style="padding:0 12px"><button class="btn r" data-a="out">লগ আউট</button></div>';
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,g=function(i){return(($('#'+i)||{}).value||'').trim()};
+  if(a==='tog'){reg=!reg;render();return}
+  if(a==='pg'){page=b.dataset.v;render();window.scrollTo(0,0);return}
+  if(a==='out'){auth.signOut();return}
+  if(a==='doIn'){var m=g('aM'),p=g('aP');if(!/^01[3-9]\d{8}$/.test(m)||p.length!==6){toast('সঠিক মোবাইল ও ৬ সংখ্যার পিন দিন');return}auth.signInWithEmailAndPassword('t'+m+DOM,p).catch(function(er){toast(/password|credential|user-not/.test(er.code||'')?'নম্বর বা পিন ভুল':er.message)});return}
+  if(a==='doReg'){var n=g('aN'),m2=g('aM'),p2=g('aP');if(n.length<2||!/^01[3-9]\d{8}$/.test(m2)||!/^\d{6}$/.test(p2)){toast('নাম, সঠিক মোবাইল ও ৬ সংখ্যার পিন দিন');return}if(p2!==g('aP2')){toast('দুইবার পিন মেলেনি');return}
+    auth.createUserWithEmailAndPassword('t'+m2+DOM,p2).then(function(c){return base.collection('tchreq').doc(c.user.uid).set({id:c.user.uid,uid:c.user.uid,name:n,phone:m2,status:'pending',ts:Date.now()})}).catch(function(er){toast(/already/.test(er.code||'')?'এই নম্বরে অ্যাকাউন্ট আগেই খোলা':er.message)});return}
+  if(a==='applyLv'){var f=g('lF'),t=g('lE')||f;if(!f){toast('শুরুর তারিখ দিন');return}if(t<f){toast('শেষ তারিখ আগে হতে পারে না');return}
+    var id='lv'+Date.now().toString(36)+Math.floor(Math.random()*1e4);
+    col('leaves').doc(id).set({id:id,sid:SID,sname:(D.me||{}).name||'',type:g('lT'),from:f,to:t,days:days(f,t),reason:g('lR'),status:'pending',applied:today(),ts:Date.now(),by:'teacher'}).then(function(){toast('আবেদন পাঠানো হয়েছে ✅');$('#lR').value=''}).catch(function(er){toast('পাঠানো যায়নি ('+(er.code||'')+')')});return}
+  if(a==='cancelLv'){col('leaves').doc(b.dataset.id).update({status:'cancelled',ts:Date.now()}).then(function(){toast('আবেদন বাতিল হয়েছে')}).catch(function(er){toast(er.code||'')});return}
+});
+if(CFG)start();else render();
+})();
+</script></body></html>
