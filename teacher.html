@@ -41,7 +41,7 @@ var mlab=function(m){var a=String(m||'').split('-');return a[1]?MN[+a[1]-1]+' '+
 var DAYS=['শনিবার','রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার'];
 var LVT=['নৈমিত্তিক ছুটি','অসুস্থতাজনিত ছুটি','অর্জিত ছুটি','মাতৃত্বকালীন ছুটি','বিনা বেতনে ছুটি','বিশেষ ছুটি','অন্যান্য'],LVQ={'নৈমিত্তিক ছুটি':10,'অসুস্থতাজনিত ছুটি':14,'অর্জিত ছুটি':30};
 function toast(m){var t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},3000)}
-var EXS=[],HW=[],REM=[],TC=null,MX='',MS=0,CK='',CL='',CT='',CKD=false,CLS=[],AC='',AD=today(),DRAFT={},auth,fs,base,U=null,SID='',D={sts:[],att:[],me:null,leaves:[],duties:[],routine:[],evals:[],cash:[],hd:{sup:[],asst:[],insp:[]},notices:[]},page='home',reg=false,unsubs=[],stat='';
+var EXS=[],HW=[],REM=[],TC=null,MX='',MS=0,CK='',CL='',CT='',CKD=false,CLS=[],AC='',AD=today(),DRAFT={},auth,fs,base,U=null,SID='',D={sts:[],att:[],me:null,leaves:[],duties:[],routine:[],evals:[],cash:[],hd:{sup:[],asst:[],insp:[],insps:[]},notices:[]},page='home',reg=false,unsubs=[],stat='';
 function days(a,b){return Math.max(1,Math.round((new Date(b||a)-new Date(a))/864e5)+1)}
 function col(n){return base.collection(n)}
 function watch(q,f){unsubs.push(q.onSnapshot(function(s){f(s.docs.map(function(d){return d.data()}));render()},function(e){toast('তথ্য পড়া যাচ্ছে না ('+(e.code||'')+')')}))}
@@ -59,14 +59,14 @@ function listen(){
   watch(col('routine').where('tid','==',SID),function(l){D.routine=l});
   watch(col('evals').where('sid','==',SID),function(l){D.evals=l.sort(function(a,b){return String(b.month).localeCompare(String(a.month))})});
   watch(col('cash').where('stf','==',SID),function(l){D.cash=l.sort(function(a,b){return String(b.date).localeCompare(String(a.date))})});
-  ['sup','asst','insp'].forEach(function(k){watch(col('halldu').where(k,'==',SID),function(l){D.hd[k]=l})});
+  ['sup','asst','insp'].forEach(function(k){watch(col('halldu').where(k,'==',SID),function(l){D.hd[k]=l})});watch(col('halldu').where('insps','array-contains',SID),function(l){D.hd.insps=l});
   CLS.forEach(function(c){watch(col('students').where('cls','==',c),function(l){D.sts=D.sts.filter(function(x){return x.cls!==c}).concat(l)});watch(col('attendance').where('cls','==',c),function(l){D.att=D.att.filter(function(x){return x.cls!==c}).concat(l)})});
   CLS.forEach(function(c){watch(col('exams').where('cls','==',c),function(l){EXS=EXS.filter(function(x){return x.cls!==c}).concat(l)});watch(col('homework').where('cls','==',c),function(l){HW=HW.filter(function(x){return x.cls!==c}).concat(l)});watch(col('remarks').where('cls','==',c),function(l){REM=REM.filter(function(x){return x.cls!==c}).concat(l)})});
   watch(col('tcheck').where('sid','==',SID),function(l){TC=l});
   watch(col('notices'),function(l){D.notices=l.sort(function(a,b){return String(b.date).localeCompare(String(a.date))})});
 }
 function used(t,y){var n=0;D.leaves.forEach(function(x){if(x.type===t&&x.status==='ok'&&String(x.from).slice(0,4)===y)n+=num(x.days)||1});return n}
-function hallList(){var m={};['sup','asst','insp'].forEach(function(k){D.hd[k].forEach(function(x){m[x.id]=Object.assign({},x,{role:{sup:'হল সুপার',asst:'সহকারী হল সুপার',insp:'কক্ষ পরিদর্শক'}[k]})})});return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))})}
+function hallList(){var m={};['sup','asst','insp','insps'].forEach(function(k){D.hd[k].forEach(function(x){m[x.id]=Object.assign({},x,{role:{sup:'হল সুপার',asst:'সহকারী হল সুপার',insp:'কক্ষ পরিদর্শক',insps:'কক্ষ পরিদর্শক'}[k]})})});return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))})}
 function authV(){
   return'<div class="auth"><h2>👨‍🏫 শিক্ষক পোর্টাল</h2><p style="text-align:center;color:var(--mu);margin-top:-8px">'+(reg?'নতুন অ্যাকাউন্ট':'লগইন')+'</p>'+(reg?'<label>আপনার নাম</label><input id="aN">':'')+'<label>মোবাইল নম্বর</label><input id="aM" inputmode="tel" maxlength="11" placeholder="01XXXXXXXXX"><label>পিন (৬ সংখ্যা)</label><input id="aP" type="password" inputmode="numeric" maxlength="6">'+(reg?'<label>পিন আবার</label><input id="aP2" type="password" inputmode="numeric" maxlength="6">':'')+'<button class="btn" data-a="'+(reg?'doReg':'doIn')+'">'+(reg?'অ্যাকাউন্ট খুলুন':'লগইন')+'</button><button class="btn s" data-a="tog">'+(reg?'আগে থেকে অ্যাকাউন্ট আছে? লগইন':'নতুন অ্যাকাউন্ট খুলুন')+'</button>'+(reg?'<div class="note" style="margin:14px 0 0">অ্যাকাউন্ট খোলার পর মাদ্রাসার অ্যাডমিন আপনাকে আপনার শিক্ষক-প্রোফাইলের সাথে যুক্ত করলে সব তথ্য দেখতে পাবেন। রেজিস্ট্রেশনে মাদ্রাসায় দেওয়া মোবাইল নম্বরই ব্যবহার করুন।</div>':'')+'</div>';
 }
