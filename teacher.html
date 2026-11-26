@@ -63,6 +63,7 @@ function listen(){
   CLS.forEach(function(c){watch(col('students').where('cls','==',c),function(l){D.sts=D.sts.filter(function(x){return x.cls!==c}).concat(l)});watch(col('attendance').where('cls','==',c),function(l){D.att=D.att.filter(function(x){return x.cls!==c}).concat(l)})});
   CLS.forEach(function(c){watch(col('exams').where('cls','==',c),function(l){EXS=EXS.filter(function(x){return x.cls!==c}).concat(l)});watch(col('homework').where('cls','==',c),function(l){HW=HW.filter(function(x){return x.cls!==c}).concat(l)});watch(col('remarks').where('cls','==',c),function(l){REM=REM.filter(function(x){return x.cls!==c}).concat(l)})});
   watch(col('tcheck').where('sid','==',SID),function(l){TC=l});
+  watch(col('tfix').where('sid','==',SID),function(l){TF=l.sort(function(a,b){return b.ts-a.ts})});
   watch(col('notices'),function(l){D.notices=l.sort(function(a,b){return String(b.date).localeCompare(String(a.date))})});
 }
 function used(t,y){var n=0;D.leaves.forEach(function(x){if(x.type===t&&x.status==='ok'&&String(x.from).slice(0,4)===y)n+=num(x.days)||1});return n}
@@ -76,7 +77,7 @@ function render(){
   if(!CFG){a.innerHTML='<div class="empty">Firebase সেটিং পাওয়া যায়নি</div>';return}
   if(!U){a.innerHTML=authV();return}
   if(!SID){a.innerHTML='<header><b>শিক্ষক পোর্টাল</b></header><div class="card"><b>'+(stat==='err'?'তথ্য পড়া যায়নি':'অ্যাডমিনের সংযুক্তির অপেক্ষায়')+'</b><div class="row" style="border:0">'+(stat==='err'?'ইন্টারনেট বা নিরাপত্তা রুলস যাচাই করুন।':'আপনার অনুরোধ অ্যাডমিনের কাছে পৌঁছেছে। তিনি আপনাকে শিক্ষক-প্রোফাইলের সাথে যুক্ত করলে এই পাতায় আপনার সব তথ্য দেখা যাবে।')+'</div></div><div style="padding:0 12px"><button class="btn s" data-a="out">লগ আউট</button></div>';return}
-  var me=D.me||{},P={home:vHome,att:vAtt,marks:vMarks,cls:vCls,leave:vLeave,duty:vDuty,routine:vRoutine,pay:vPay,me:vMe}[page]||vHome;
+  var me=D.me||{},P={home:vHome,att:vAtt,marks:vMarks,cls:vCls,leave:vLeave,fix:vFix,duty:vDuty,routine:vRoutine,pay:vPay,me:vMe}[page]||vHome;
   var T=[['home','🏠','হোম'],['att','🗓️','হাজিরা'],['marks','📝','নম্বর'],['cls','📚','শ্রেণি'],['me','👤','আমি']],inNav=T.some(function(x){return x[0]===page});
   a.innerHTML='<header style="display:flex;gap:10px;align-items:center">'+(inNav?'':'<button data-a="pg" data-v="home" style="background:none;border:0;color:#fff;font-size:24px">←</button>')+'<div><b>'+esc(me.name||'শিক্ষক পোর্টাল')+'</b><small>'+esc(me.role||'')+'</small></div></header>'+P()+'<nav><div>'+T.map(function(t){return'<button class="'+(page===t[0]?'on':'')+'" data-a="pg" data-v="'+t[0]+'"><i>'+t[1]+'</i>'+t[2]+'</button>'}).join('')+'</div></nav>';
   if(fid&&$('#'+fid)&&$('#'+fid).tagName!=='SELECT'){var e=$('#'+fid);e.focus()}
@@ -118,6 +119,7 @@ function ckCard(){
   var h='<div class="card"><b>🕒 আজকের উপস্থিতি (চেক-ইন)</b>';
   if(!r)h+='<button class="btn" data-a="ckIn">✅ আমি এসেছি — চেক-ইন</button>';
   else{h+='<div class="row" style="border:0">চেক-ইন: <b>'+hm(tdate(r.at))+'</b>'+(r.out?' • চেক-আউট: <b>'+hm(tdate(r.out))+'</b>':'')+'</div>'+(r.out?'':'<button class="btn s" data-a="ckOut">🚪 চেক-আউট (ছুটি হলে)</button>')}
+  h+='<button class="btn s" style="margin-top:8px" data-a="pg" data-v="fix">✏️ চেক-ইন/আউট সংশোধনের আবেদন</button>';
   return h+'</div>';
 }
 /* ---- নম্বর এন্ট্রি ---- */
@@ -133,17 +135,19 @@ function vMarks(){
   return h;
 }
 /* ---- শ্রেণি: হোমওয়ার্ক + মন্তব্য ---- */
-var RK=['প্রশংসা','পড়াশোনা','আচরণ','সতর্কতা','অন্যান্য'];
+var RK=['পড়াশোনার অগ্রগতি','উপস্থিতি ও শৃঙ্খলা','ভালো কাজ','বিশেষ সমস্যা ও করণীয়','অভিভাবকের সঙ্গে যোগাযোগ','অন্যান্য'],RKH=['বিশেষ সমস্যা ও করণীয়','অভিভাবকের সঙ্গে যোগাযোগ'];
+function rkc(k){return/সতর্কতা|বিশেষ সমস্যা/.test(k)?'x':/প্রশংসা|ভালো কাজ/.test(k)?'':'p'}
+var TF=[];
 function vCls(){
   if(!CLS.length)return'<div class="note">আপনাকে এখনও কোনো শ্রেণি দেওয়া হয়নি।</div>';
   if(!CL||CLS.indexOf(CL)<0)CL=CLS[0];
   var sts=D.sts.filter(function(s){return s.cls===CL&&s.status!=='left'}).sort(function(a,b){return(num(a.roll)||9999)-(num(b.roll)||9999)});
   var tb=CT||'hw';
-  var h='<div class="card"><label style="margin-top:0">শ্রেণি</label><select id="cls1">'+CLS.map(function(c){return'<option'+(c===CL?' selected':'')+'>'+esc(c)+'</option>'}).join('')+'</select><div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm '+(tb==='hw'?'':'s')+'" data-a="ctab" data-v="hw" style="flex:1">📚 হোমওয়ার্ক / নোটিশ</button><button class="btn sm '+(tb==='rm'?'':'s')+'" data-a="ctab" data-v="rm" style="flex:1">💬 ছাত্রের মন্তব্য</button></div></div>';
+  var h='<div class="card"><label style="margin-top:0">শ্রেণি</label><select id="cls1">'+CLS.map(function(c){return'<option'+(c===CL?' selected':'')+'>'+esc(c)+'</option>'}).join('')+'</select><div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm '+(tb==='hw'?'':'s')+'" data-a="ctab" data-v="hw" style="flex:1">📚 হোমওয়ার্ক / নোটিশ</button><button class="btn sm '+(tb==='rm'?'':'s')+'" data-a="ctab" data-v="rm" style="flex:1">💬 পর্যবেক্ষণ ও আচরণ</button></div></div>';
   if(tb==='hw'){
     h+='<div class="card"><b>➕ নতুন হোমওয়ার্ক / ক্লাস নোটিশ</b><label>বিষয়</label><input id="hwS" placeholder="যেমন: গণিত"><label>শিরোনাম *</label><input id="hwT"><label>বিবরণ</label><textarea id="hwB" rows="3"></textarea><label>জমার তারিখ (ঐচ্ছিক)</label><input id="hwD" type="date"><button class="btn" data-a="hwSave">প্রকাশ করুন</button></div><div class="card"><b>সাম্প্রতিক</b>'+(HW.filter(function(x){return x.cls===CL}).sort(function(a,b){return b.ts-a.ts}).slice(0,15).map(function(x){return'<div class="row"><b>'+esc(x.title)+'</b>'+(x.subject?' <span class="bd">'+esc(x.subject)+'</span>':'')+'<small>'+fdate(x.date)+' • '+esc(x.tname||'')+(x.due?' • জমা '+fdate(x.due):'')+'</small>'+(x.body?'<div style="font-size:13.5px;margin-top:3px">'+esc(x.body)+'</div>':'')+(x.sid===SID?'<button class="btn sm s" style="margin-top:6px" data-a="hwDel" data-id="'+x.id+'">মুছুন</button>':'')+'</div>'}).join('')||'<div class="empty">কিছু নেই</div>')+'</div>';
   }else{
-    h+='<div class="card"><b>➕ ছাত্রের মন্তব্য / আচরণের রেকর্ড</b><label>ছাত্র *</label><select id="rmS"><option value="">— বাছাই —</option>'+sts.map(function(s){return'<option value="'+s.id+'">'+bn(s.roll||'-')+'. '+esc(s.name)+'</option>'}).join('')+'</select><label>ধরন</label><select id="rmK">'+RK.map(function(k){return'<option>'+k+'</option>'}).join('')+'</select><label>মন্তব্য *</label><textarea id="rmT" rows="3"></textarea><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="rmV" checked style="width:auto"> অভিভাবক দেখতে পাবেন</label><button class="btn" data-a="rmSave">সংরক্ষণ</button></div><div class="card"><b>সাম্প্রতিক মন্তব্য</b>'+(REM.filter(function(x){return x.cls===CL}).sort(function(a,b){return b.ts-a.ts}).slice(0,20).map(function(x){return'<div class="row"><b>'+esc(x.stname)+'</b> <span class="bd '+(x.kind==='সতর্কতা'?'x':x.kind==='প্রশংসা'?'':'p')+'">'+esc(x.kind)+'</span><small>'+fdate(x.date)+' • '+esc(x.tname||'')+(x.vis===false?' • 🔒 অভিভাবক দেখবেন না':'')+'</small><div style="font-size:13.5px;margin-top:3px">'+esc(x.text)+'</div>'+(x.tid===SID?'<button class="btn sm s" style="margin-top:6px" data-a="rmDel" data-id="'+x.id+'">মুছুন</button>':'')+'</div>'}).join('')||'<div class="empty">কিছু নেই</div>')+'</div>';
+    h+='<div class="card"><b>➕ শিক্ষার্থী পর্যবেক্ষণ / আচরণ রেকর্ড</b><label>ছাত্র *</label><select id="rmS"><option value="">— বাছাই —</option>'+sts.map(function(s){return'<option value="'+s.id+'">'+bn(s.roll||'-')+'. '+esc(s.name)+'</option>'}).join('')+'</select><label>ধরন</label><select id="rmK">'+RK.map(function(k){return'<option>'+k+'</option>'}).join('')+'</select><label>মন্তব্য *</label><textarea id="rmT" rows="3"></textarea><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="rmV" checked style="width:auto"> অভিভাবক দেখতে পাবেন</label><button class="btn" data-a="rmSave">সংরক্ষণ</button></div><div class="card"><b>সাম্প্রতিক পর্যবেক্ষণ</b>'+(REM.filter(function(x){return x.cls===CL}).sort(function(a,b){return b.ts-a.ts}).slice(0,20).map(function(x){return'<div class="row"><b>'+esc(x.stname)+'</b> <span class="bd '+rkc(x.kind)+'">'+esc(x.kind)+'</span><small>'+fdate(x.date)+' • '+esc(x.tname||'')+(x.vis===false?' • 🔒 অভিভাবক দেখবেন না':'')+'</small><div style="font-size:13.5px;margin-top:3px">'+esc(x.text)+'</div>'+(x.tid===SID?'<button class="btn sm s" style="margin-top:6px" data-a="rmDel" data-id="'+x.id+'">মুছুন</button>':'')+'</div>'}).join('')||'<div class="empty">কিছু নেই</div>')+'</div>';
   }
   return h;
 }
@@ -152,9 +156,13 @@ function vLeave(){
   var bd={pending:['অপেক্ষমাণ','p'],ok:['অনুমোদিত',''],no:['বাতিল','x'],cancelled:['নিজে বাতিল','x']};
   return'<div class="st">'+B+'</div><div class="card"><b>➕ ছুটির আবেদন</b><label>ধরন</label><select id="lT">'+LVT.map(function(t){return'<option>'+t+'</option>'}).join('')+'</select><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>শুরু</label><input id="lF" type="date" value="'+today()+'"></div><div><label>শেষ</label><input id="lE" type="date"></div></div><label>কারণ</label><textarea id="lR" rows="2"></textarea><button class="btn" data-a="applyLv">আবেদন পাঠান</button></div><div class="card"><b>আমার আবেদনসমূহ</b>'+(D.leaves.length?D.leaves.map(function(x){var b=bd[x.status]||bd.pending;return'<div class="row"><b>'+esc(x.type)+' <span class="bd '+b[1]+'">'+b[0]+'</span></b><small>'+fdate(x.from)+(x.to&&x.to!==x.from?' – '+fdate(x.to):'')+' • '+bn(x.days||1)+' দিন</small>'+(x.status==='pending'?'<button class="btn sm s" style="margin-top:6px" data-a="cancelLv" data-id="'+x.id+'">বাতিল করুন</button>':'')+'</div>'}).join(''):'<div class="empty">কোনো আবেদন নেই</div>')+'</div>';
 }
+function vFix(){
+  var bd={pending:['অপেক্ষমাণ','p'],ok:['অনুমোদিত',''],no:['বাতিল','x']};
+  return'<div class="card"><b>✏️ চেক-ইন/আউট সংশোধনের আবেদন</b><div style="font-size:13px;color:#667;margin:4px 0">চেক-ইন করতে ভুলে গেলে বা ভুল সময় হলে এখানে জানান। প্রধান অনুমোদন দিলে সময় ঠিক হবে।</div><label>তারিখ</label><input id="fxD" type="date" value="'+today()+'"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>সঠিক চেক-ইন সময়</label><input id="fxI" type="time"></div><div><label>সঠিক চেক-আউট সময়</label><input id="fxO" type="time"></div></div><label>কারণ *</label><textarea id="fxR" rows="2"></textarea><button class="btn" data-a="fixSend">আবেদন পাঠান</button></div><div class="card"><b>আমার আবেদনসমূহ</b>'+(TF.length?TF.map(function(x){var b=bd[x.status]||bd.pending;return'<div class="row"><b>'+fdate(x.date)+' <span class="bd '+b[1]+'">'+b[0]+'</span></b><small>ইন: '+esc(x.inT||'—')+' • আউট: '+esc(x.outT||'—')+'</small><small>'+esc(x.reason||'')+'</small></div>'}).join(''):'<div class="empty">কোনো আবেদন নেই</div>')+'</div>';
+}
 function vDuty(){
   var h=hallList();
-  return'<div class="card"><b>📋 আমার দায়িত্ব</b>'+(D.duties.length?D.duties.sort(function(a,b){return String(b.given).localeCompare(String(a.given))}).map(function(x){return'<div class="row"><b>'+esc(x.title)+' <span class="bd '+(x.status==='সম্পন্ন'?'':'p')+'">'+esc(x.status||'চলমান')+'</span></b><small>'+esc(x.cat||'')+' • প্রদান '+fdate(x.given)+(x.due?' • শেষ '+fdate(x.due):'')+'</small>'+(x.report?'<small>📝 '+esc(x.report)+'</small>':'')+'</div>'}).join(''):'<div class="empty">কোনো দায়িত্ব নেই</div>')+'</div><div class="card"><b>📝 হল ডিউটি</b>'+(h.length?h.map(function(x){return'<div class="row">'+fdate(x.date)+' • '+esc(x.time)+' • কক্ষ '+bn(esc(x.room))+'<small>'+esc(x.role)+' — '+esc(x.exam||'')+' • '+esc(x.cls||'')+'</small></div>'}).join(''):'<div class="empty">কোনো হল ডিউটি নেই</div>')+'</div>';
+  return'<div class="card"><b>📋 আমার দায়িত্ব</b>'+(D.duties.length?D.duties.sort(function(a,b){return String(b.given).localeCompare(String(a.given))}).map(function(x){return'<div class="row"><b>'+esc(x.title)+' <span class="bd '+(x.status==='সম্পন্ন'?'':'p')+'">'+esc(x.status||'চলমান')+'</span></b><small>'+esc(x.cat||'')+' • প্রদান '+fdate(x.given)+(x.due?' • শেষ '+fdate(x.due):'')+'</small>'+(x.report?'<small>📝 '+esc(x.report)+'</small>':'')+'</div>'}).join(''):'<div class="empty">কোনো দায়িত্ব নেই</div>')+'</div><div class="card"><b>📝 হল ডিউটি</b>'+(h.length?h.map(function(x){return'<div class="row">'+fdate(x.date)+' • '+esc(x.time)+' • কক্ষ '+bn(esc(x.room))+'<small>'+esc(x.role)+' — '+esc(x.exam||'')+' • '+esc(x.cls||'')+'</small>'+(x.sup===SID?(x.supOk?'<small>✔ আপনি নিশ্চিত করেছেন</small>':'<button class="btn sm" style="margin-top:6px" data-a="supOk" data-id="'+x.id+'">✔ সুপার হিসেবে দায়িত্ব নিশ্চিত করুন</button>'):'')+'</div>'}).join(''):'<div class="empty">কোনো হল ডিউটি নেই</div>')+'</div>';
 }
 function vRoutine(){
   var any=DAYS.some(function(d){return D.routine.some(function(x){return x.day===d})});
@@ -173,6 +181,8 @@ function vMe2(m){
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,g=function(i){return(($('#'+i)||{}).value||'').trim()};
   if(a==='ckIn'){var td=today();col('tcheck').doc(td+'_'+SID).set({id:td+'_'+SID,sid:SID,sname:(D.me||{}).name||'',date:td,at:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){toast('চেক-ইন হয়েছে ✅')}).catch(function(er){toast('চেক-ইন যায়নি ('+(er.code||'')+')')});return}
+  if(a==='fixSend'){var fd=g('fxD'),fi=g('fxI'),fo=g('fxO'),fr=g('fxR');if(!fd||(!fi&&!fo)||!fr){toast('তারিখ, অন্তত একটি সময় ও কারণ দিন');return}var fid='fx'+Date.now().toString(36)+Math.floor(Math.random()*1e4);col('tfix').doc(fid).set({id:fid,sid:SID,sname:(D.me||{}).name||'',date:fd,inT:fi,outT:fo,reason:fr,status:'pending',ts:Date.now()}).then(function(){toast('আবেদন পাঠানো হয়েছে ✅');$('#fxR').value=''}).catch(function(er){toast('যায়নি ('+(er.code||'')+')')});return}
+  if(a==='supOk'){col('halldu').doc(b.dataset.id).update({supOk:true,supOkAt:today()}).then(function(){toast('নিশ্চিত হয়েছে ✅')}).catch(function(er){toast('যায়নি ('+(er.code||'')+')')});return}
   if(a==='ckOut'){var td2=today();col('tcheck').doc(td2+'_'+SID).update({out:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){toast('চেক-আউট হয়েছে')}).catch(function(er){toast(er.code||'')});return}
   if(a==='ctab'){CT=b.dataset.v;render();return}
   if(a==='mkSave'){var ex=EXS.filter(function(x){return x.id===MX})[0];if(!ex)return;var sb=ex.subjects[MS],up={},bad='';
@@ -201,4 +211,5 @@ document.addEventListener('click',function(e){
 document.addEventListener('change',function(e){var i=e.target.id;if(i==='acs'){AC=e.target.value;render()}else if(i==='mxs'){MX=e.target.value;MS=0;render()}else if(i==='mss'){MS=+e.target.value;render()}else if(i==='cls1'){CL=e.target.value;render()}else if(i==='adt'){AD=e.target.value||today();render()}});
 if(CFG)start();else render();
 })();
+document.addEventListener('change',function(e){if(e.target.id==='rmK'){var v=$('#rmV');if(v)v.checked=RKH.indexOf(e.target.value)<0}});
 </script></body></html>
