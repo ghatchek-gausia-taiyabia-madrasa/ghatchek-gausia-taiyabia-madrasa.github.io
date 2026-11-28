@@ -63,6 +63,7 @@ function listen(){
   CLS.forEach(function(c){watch(col('students').where('cls','==',c),function(l){D.sts=D.sts.filter(function(x){return x.cls!==c}).concat(l)});watch(col('attendance').where('cls','==',c),function(l){D.att=D.att.filter(function(x){return x.cls!==c}).concat(l)})});
   CLS.forEach(function(c){watch(col('exams').where('cls','==',c),function(l){EXS=EXS.filter(function(x){return x.cls!==c}).concat(l)});watch(col('homework').where('cls','==',c),function(l){HW=HW.filter(function(x){return x.cls!==c}).concat(l)});watch(col('remarks').where('cls','==',c),function(l){REM=REM.filter(function(x){return x.cls!==c}).concat(l)})});
   watch(col('tcheck').where('sid','==',SID),function(l){TC=l});
+  watch(col('qpaper').where('tid','==',SID),function(l){QP=l});
   watch(col('tfix').where('sid','==',SID),function(l){TF=l.sort(function(a,b){return b.ts-a.ts})});
   watch(col('notices'),function(l){D.notices=l.sort(function(a,b){return String(b.date).localeCompare(String(a.date))})});
 }
@@ -77,14 +78,14 @@ function render(){
   if(!CFG){a.innerHTML='<div class="empty">Firebase সেটিং পাওয়া যায়নি</div>';return}
   if(!U){a.innerHTML=authV();return}
   if(!SID){a.innerHTML='<header><b>শিক্ষক পোর্টাল</b></header><div class="card"><b>'+(stat==='err'?'তথ্য পড়া যায়নি':'অ্যাডমিনের সংযুক্তির অপেক্ষায়')+'</b><div class="row" style="border:0">'+(stat==='err'?'ইন্টারনেট বা নিরাপত্তা রুলস যাচাই করুন।':'আপনার অনুরোধ অ্যাডমিনের কাছে পৌঁছেছে। তিনি আপনাকে শিক্ষক-প্রোফাইলের সাথে যুক্ত করলে এই পাতায় আপনার সব তথ্য দেখা যাবে।')+'</div></div><div style="padding:0 12px"><button class="btn s" data-a="out">লগ আউট</button></div>';return}
-  var me=D.me||{},P={home:vHome,att:vAtt,marks:vMarks,cls:vCls,leave:vLeave,fix:vFix,duty:vDuty,routine:vRoutine,pay:vPay,me:vMe}[page]||vHome;
+  var me=D.me||{},P={home:vHome,att:vAtt,marks:vMarks,cls:vCls,leave:vLeave,fix:vFix,qp:vQp,duty:vDuty,routine:vRoutine,pay:vPay,me:vMe}[page]||vHome;
   var T=[['home','🏠','হোম'],['att','🗓️','হাজিরা'],['marks','📝','নম্বর'],['cls','📚','শ্রেণি'],['me','👤','আমি']],inNav=T.some(function(x){return x[0]===page});
   a.innerHTML='<header style="display:flex;gap:10px;align-items:center">'+(inNav?'':'<button data-a="pg" data-v="home" style="background:none;border:0;color:#fff;font-size:24px">←</button>')+'<div><b>'+esc(me.name||'শিক্ষক পোর্টাল')+'</b><small>'+esc(me.role||'')+'</small></div></header>'+P()+'<nav><div>'+T.map(function(t){return'<button class="'+(page===t[0]?'on':'')+'" data-a="pg" data-v="'+t[0]+'"><i>'+t[1]+'</i>'+t[2]+'</button>'}).join('')+'</div></nav>';
   if(fid&&$('#'+fid)&&$('#'+fid).tagName!=='SELECT'){var e=$('#'+fid);e.focus()}
 }
 function vHome(){
   var t=today(),y=t.slice(0,4),pl=D.leaves.filter(function(x){return x.status==='pending'}).length,od=D.duties.filter(function(x){return x.status!=='সম্পন্ন'&&x.status!=='বাতিল'}),uh=hallList().filter(function(x){return x.date>=t});
-  return ckCard()+'<div class="st" style="grid-template-columns:repeat(3,1fr)"><button class="btn s" style="margin:0;padding:14px 4px" data-a="pg" data-v="leave">🏖️<br>ছুটি</button><button class="btn s" style="margin:0;padding:14px 4px" data-a="pg" data-v="duty">📋<br>দায়িত্ব</button><button class="btn s" style="margin:0;padding:14px 4px" data-a="pg" data-v="routine">🕘<br>রুটিন</button></div><div class="st"><div><small>নৈমিত্তিক ছুটি অবশিষ্ট</small><b>'+bn(LVQ['নৈমিত্তিক ছুটি']-used('নৈমিত্তিক ছুটি',y))+' দিন</b></div><div><small>অপেক্ষমাণ আবেদন</small><b>'+bn(pl)+'টি</b></div><div><small>চলমান দায়িত্ব</small><b>'+bn(od.length)+'টি</b></div><div><small>আসন্ন হল ডিউটি</small><b>'+bn(uh.length)+'টি</b></div></div>'+
+  return ckCard()+'<div class="st" style="grid-template-columns:repeat(4,1fr)"><button class="btn s" style="margin:0;padding:14px 4px" data-a="pg" data-v="leave">🏖️<br>ছুটি</button><button class="btn s" style="margin:0;padding:14px 4px" data-a="pg" data-v="duty">📋<br>দায়িত্ব</button><button class="btn s" style="margin:0;padding:14px 4px" data-a="pg" data-v="routine">🕘<br>রুটিন</button><button class="btn s" style="margin:0;padding:14px 4px" data-a="pg" data-v="qp">🔒<br>প্রশ্নপত্র'+(QP.filter(function(x){return x.status==='requested'||x.status==='revise'}).length?' <b style="color:#c0392b">('+bn(QP.filter(function(x){return x.status==='requested'||x.status==='revise'}).length)+')</b>':'')+'</button></div><div class="st"><div><small>নৈমিত্তিক ছুটি অবশিষ্ট</small><b>'+bn(LVQ['নৈমিত্তিক ছুটি']-used('নৈমিত্তিক ছুটি',y))+' দিন</b></div><div><small>অপেক্ষমাণ আবেদন</small><b>'+bn(pl)+'টি</b></div><div><small>চলমান দায়িত্ব</small><b>'+bn(od.length)+'টি</b></div><div><small>আসন্ন হল ডিউটি</small><b>'+bn(uh.length)+'টি</b></div></div>'+
   (uh.length?'<div class="card"><b>📝 আসন্ন হল ডিউটি</b>'+uh.slice(0,3).map(function(x){return'<div class="row">'+fdate(x.date)+' • '+esc(x.time)+' • কক্ষ '+bn(esc(x.room))+'<small>'+esc(x.role)+' — '+esc(x.exam||'')+'</small></div>'}).join('')+'</div>':'')+
   '<div class="card"><b>📢 নোটিশ</b>'+(D.notices.length?D.notices.slice(0,5).map(function(n){return'<div class="row"><b>'+esc(n.title)+'</b><small>'+fdate(n.date)+'</small><div style="font-size:13.5px;margin-top:3px">'+esc((n.body||'').slice(0,160))+'</div></div>'}).join(''):'<div class="empty">কোনো নোটিশ নেই</div>')+'</div>';
 }
@@ -137,7 +138,7 @@ function vMarks(){
 /* ---- শ্রেণি: হোমওয়ার্ক + মন্তব্য ---- */
 var RK=['পড়াশোনার অগ্রগতি','উপস্থিতি ও শৃঙ্খলা','ভালো কাজ','বিশেষ সমস্যা ও করণীয়','অভিভাবকের সঙ্গে যোগাযোগ','অন্যান্য'],RKH=['বিশেষ সমস্যা ও করণীয়','অভিভাবকের সঙ্গে যোগাযোগ'];
 function rkc(k){return/সতর্কতা|বিশেষ সমস্যা/.test(k)?'x':/প্রশংসা|ভালো কাজ/.test(k)?'':'p'}
-var TF=[];
+var TF=[],QP=[];
 function vCls(){
   if(!CLS.length)return'<div class="note">আপনাকে এখনও কোনো শ্রেণি দেওয়া হয়নি।</div>';
   if(!CL||CLS.indexOf(CL)<0)CL=CLS[0];
@@ -155,6 +156,10 @@ function vLeave(){
   var y=today().slice(0,4),B=Object.keys(LVQ).map(function(k){var u=used(k,y);return'<div><small>'+k.replace(' ছুটি','')+'</small><b>'+bn(LVQ[k]-u)+'</b> / '+bn(LVQ[k])+'</div>'}).join('');
   var bd={pending:['অপেক্ষমাণ','p'],ok:['অনুমোদিত',''],no:['বাতিল','x'],cancelled:['নিজে বাতিল','x']};
   return'<div class="st">'+B+'</div><div class="card"><b>➕ ছুটির আবেদন</b><label>ধরন</label><select id="lT">'+LVT.map(function(t){return'<option>'+t+'</option>'}).join('')+'</select><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>শুরু</label><input id="lF" type="date" value="'+today()+'"></div><div><label>শেষ</label><input id="lE" type="date"></div></div><label>কারণ</label><textarea id="lR" rows="2"></textarea><button class="btn" data-a="applyLv">আবেদন পাঠান</button></div><div class="card"><b>আমার আবেদনসমূহ</b>'+(D.leaves.length?D.leaves.map(function(x){var b=bd[x.status]||bd.pending;return'<div class="row"><b>'+esc(x.type)+' <span class="bd '+b[1]+'">'+b[0]+'</span></b><small>'+fdate(x.from)+(x.to&&x.to!==x.from?' – '+fdate(x.to):'')+' • '+bn(x.days||1)+' দিন</small>'+(x.status==='pending'?'<button class="btn sm s" style="margin-top:6px" data-a="cancelLv" data-id="'+x.id+'">বাতিল করুন</button>':'')+'</div>'}).join(''):'<div class="empty">কোনো আবেদন নেই</div>')+'</div>';
+}
+function vQp(){
+  var st={requested:['জমার অপেক্ষায়','p'],submitted:['জমা হয়েছে — অনুমোদনের অপেক্ষায়',''],approved:['অনুমোদিত ✅',''],revise:['সংশোধন চাওয়া হয়েছে','x']};
+  return'<div class="card"><b>🔒 প্রশ্নপত্র জমা</b><div style="font-size:13px;color:#667;margin:4px 0">এই তালিকা শুধু আপনি দেখতে পারেন। প্রশ্নপত্র Google Drive-এ রেখে লিংকটি (শেয়ার: "লিংক আছে এমন যে কেউ") এখানে দিন, অথবা নোটে লিখুন।</div></div>'+(QP.length?QP.slice().sort(function(a,b){return String(a.deadline||'').localeCompare(String(b.deadline||''))}).map(function(x){var b=st[x.status]||st.requested,ed=x.status==='requested'||x.status==='revise';return'<div class="card"><b>'+esc(x.subject)+' — '+esc(x.cls||'')+'</b> <span class="bd '+b[1]+'">'+b[0]+'</span><div style="font-size:13px;color:#667">'+esc(x.exam||'')+(x.deadline?' • শেষ তারিখ: '+fdate(x.deadline):'')+'</div>'+(x.remark?'<div style="color:#c0392b;font-size:13px">সুপারের মন্তব্য: '+esc(x.remark)+'</div>':'')+(ed?'<label>প্রশ্নপত্রের লিংক</label><input id="qpL_'+x.id+'" value="'+esc(x.link||'')+'" placeholder="https://drive.google.com/..."><label>নোট (ঐচ্ছিক)</label><textarea id="qpN_'+x.id+'" rows="2">'+esc(x.note||'')+'</textarea><button class="btn" data-a="qpSend" data-id="'+x.id+'">📤 জমা দিন</button>':(x.link?'<div style="font-size:13px">🔗 জমা দেওয়া লিংক আছে</div>':''))+'</div>'}).join(''):'<div class="card"><div class="empty">কোনো প্রশ্নপত্র চাওয়া হয়নি</div></div>');
 }
 function vFix(){
   var bd={pending:['অপেক্ষমাণ','p'],ok:['অনুমোদিত',''],no:['বাতিল','x']};
@@ -181,6 +186,7 @@ function vMe2(m){
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,g=function(i){return(($('#'+i)||{}).value||'').trim()};
   if(a==='ckIn'){var td=today();col('tcheck').doc(td+'_'+SID).set({id:td+'_'+SID,sid:SID,sname:(D.me||{}).name||'',date:td,at:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){toast('চেক-ইন হয়েছে ✅')}).catch(function(er){toast('চেক-ইন যায়নি ('+(er.code||'')+')')});return}
+  if(a==='qpSend'){var qi=b.dataset.id,ql=g('qpL_'+qi),qn=g('qpN_'+qi);if(!ql&&!qn){toast('লিংক বা নোট দিন',true);return}col('qpaper').doc(qi).update({link:ql,note:qn,status:'submitted',subAt:Date.now()}).then(function(){toast('জমা হয়েছে ✅')}).catch(function(er){toast('যায়নি ('+(er.code||'')+')')});return}
   if(a==='fixSend'){var fd=g('fxD'),fi=g('fxI'),fo=g('fxO'),fr=g('fxR');if(!fd||(!fi&&!fo)||!fr){toast('তারিখ, অন্তত একটি সময় ও কারণ দিন');return}var fid='fx'+Date.now().toString(36)+Math.floor(Math.random()*1e4);col('tfix').doc(fid).set({id:fid,sid:SID,sname:(D.me||{}).name||'',date:fd,inT:fi,outT:fo,reason:fr,status:'pending',ts:Date.now()}).then(function(){toast('আবেদন পাঠানো হয়েছে ✅');$('#fxR').value=''}).catch(function(er){toast('যায়নি ('+(er.code||'')+')')});return}
   if(a==='supOk'){col('halldu').doc(b.dataset.id).update({supOk:true,supOkAt:today()}).then(function(){toast('নিশ্চিত হয়েছে ✅')}).catch(function(er){toast('যায়নি ('+(er.code||'')+')')});return}
   if(a==='ckOut'){var td2=today();col('tcheck').doc(td2+'_'+SID).update({out:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){toast('চেক-আউট হয়েছে')}).catch(function(er){toast(er.code||'')});return}
